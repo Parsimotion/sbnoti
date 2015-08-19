@@ -5,7 +5,7 @@
     "type": "git",
     "url": "git://github.com/Parsimotion/servicebus-notifications-reader.git"
   },
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "src/main.js",
   "dependencies": {
     "azure": "^0.10.6",
