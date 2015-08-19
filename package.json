@@ -9,7 +9,7 @@
   "main": "src/main.js",
   "dependencies": {
     "azure": "^0.10.6",
-    "bluebird": "^2.3.11",
+    "bluebird": "^2.9.34",
     "coffee-script": "^1.8.0"
   },
   "devDependencies": {

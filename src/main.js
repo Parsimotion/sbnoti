@@ -1,1 +1,1 @@
-module.exports = require("./notifications-reader");
+module.exports = require("./notificationsReader");

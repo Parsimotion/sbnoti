@@ -10,8 +10,11 @@ reader = new NotificationsReader
   connectionString: "the azure connection string"
   topic: "the topic name"
   subscription: "the subscription name"
-  options:
-    logs: true #defaults to false
+  # optional:
+  options: log: true
+  filters: [
+    { name: "customFilter", expression: "created = True" }
+  ]
 
 reader.run (message) =>
   # do something with message
