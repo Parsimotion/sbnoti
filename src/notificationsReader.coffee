@@ -63,6 +63,7 @@ class NotificationsReader
           onError "The receiver didn't returned a Promise."
 
         @_receive receiver
+      .catch => @_receive receiver # (no more messages)
 
   _buildMessage: (message) ->
     JSON.parse message.body.substring message.body.indexOf "{"
