@@ -1,5 +1,5 @@
 {
-  "name": "servicebus-notifications-reader",
+  "name": "sb-reader",
   "description": "Notifications Reader for Azure Service Bus",
   "repository": {
     "type": "git",
