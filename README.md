@@ -1,10 +1,11 @@
 # servicebus-notifications-reader
+##### (or `sbnoti` because Azure has problems with large path names -__-)
 Notifications Reader for Azure Service Bus
 
 Usage:
 ```coffee-script
 Promise = require("bluebird")
-NotificationsReader = require("servicebus-notifications-reader")
+NotificationsReader = require("sbnoti")
 
 reader = new NotificationsReader
   connectionString: "the azure connection string"
