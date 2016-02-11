@@ -1,11 +1,11 @@
 {
-  "name": "servicebus-notifications-reader",
+  "name": "sbnoti",
   "description": "Notifications Reader for Azure Service Bus",
   "repository": {
     "type": "git",
-    "url": "git://github.com/Parsimotion/servicebus-notifications-reader.git"
+    "url": "git://github.com/Parsimotion/sbnoti.git"
   },
-  "version": "0.0.2",
+  "version": "1.0.0",
   "main": "src/main.js",
   "dependencies": {
     "azure": "^0.10.6",
