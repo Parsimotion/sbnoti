@@ -16,6 +16,8 @@ reader = new NotificationsReader
   filters: [
     { name: "customFilter", expression: "created = True" }
   ]
+  concurrency: 25
+  waitForMessageTime: 3000
 
 reader.run (message) =>
   # do something with message

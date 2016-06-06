@@ -1,35 +1,38 @@
 azure = require("azure")
 Promise = require("bluebird")
 async = require("async")
+_ = require("lodash")
 module.exports =
 
 # Notifications reader from Azure Service Bus.
-# config = { connectionString, topic, subscription, options: { log }, filters: [ { name, filter } ] }
+# config = { connectionString, topic, subscription, options: { log }, filters: [ { name, filter } ], concurrency, waitForMessageTime }
 class NotificationsReader
   constructor: (@config) ->
     @serviceBusService = Promise.promisifyAll(
       azure.createServiceBusService @config.connectionString
     )
-    @concurrency = @config.concurrency or 25
-    @reorderPoint = @config.reorderPoint or 5 #max queue length (does not include running agents)
+    _.defaults @config,
+      concurrency: 25
+      waitForMessageTime: 1000
 
-  # Start to receive notifications and calls the given function with every received message
+  # Starts to receive notifications and calls the given function with every received message.
   # processMessage: (message) -> promise
   run: (processMessage) =>
     @_createSubscription().then =>
       @_log "Listening for messages..."
-      @_buildQueueWith(processMessage)
+      @_buildQueueWith processMessage
       @_receive()
 
   _buildQueueWith: (processMessage) =>
     @q = async.queue (message, callback) =>
-      response = try processMessage(message)
+      response = try processMessage message
       return callback("The receiver didn't returned a Promise.") if not response?.then?
       response
-      .then -> callback()
-      .catch (err) -> 
-        callback(err or 'unknown error')
-    , @concurrency
+      .then callback
+      .catch (err) -> callback(err or "unknown error")
+    , @config.concurrency
+
+    @q.empty = @_receive
 
   _createSubscription: =>
     (@_doWithTopic "createSubscription")()
@@ -57,29 +60,27 @@ class NotificationsReader
       .then => @_log "Custom filter created!"
       .catch @_handleError
 
-  _receive: (receiver) =>
-    return if @q.running() == @concurrency and @q.length() >= @reorderPoint
+  _receive: =>
     (@_doWithTopic "receiveSubscriptionMessage") { isPeekLock: true }
-      .spread (lockedMessage) =>
-        messageId = lockedMessage.brokerProperties?.MessageId
-        @_log "Receiving message... #{messageId}"
+      .spread @_process
+      .catch (e) =>
+        setTimeout @_receive, @config.waitForMessageTime # (no more messages)
 
-        onError = (error) =>
-          @_log "--> Error processing message: #{error}. #{messageId}"
-          (@_do "unlockMessage") lockedMessage
+  _process: (lockedMessage) =>
+    messageId = lockedMessage.brokerProperties?.MessageId
+    @_log "Receiving message... #{messageId}"
 
-        @q.push @_buildMessage(lockedMessage), (err) =>
-          @_receive()
-          return onError(err) if err?
-          (@_do "deleteMessage") lockedMessage
-            .then =>
-              @_log "--> Message #{messageId} processed OK."
-            .catch (error) =>
-              @_log "--> Error deleting message: #{error}. #{messageId}"
-        @_receive()
+    onError = (error) =>
+      @_log "--> Error processing message: #{error}. #{messageId}"
+      (@_do "unlockMessage") lockedMessage
 
-      .catch (e) => @_receive() # (no more messages)
-    return
+    @q.push @_buildMessage(lockedMessage), (err) =>
+      return onError(err) if err?
+      (@_do "deleteMessage") lockedMessage
+        .then =>
+          @_log "--> Message #{messageId} processed OK."
+        .catch (error) =>
+          @_log "--> Error deleting message: #{error}. #{messageId}"
 
   _buildMessage: (message) ->
     clean = (body) =>
