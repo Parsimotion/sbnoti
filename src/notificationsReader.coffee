@@ -5,7 +5,7 @@ _ = require("lodash")
 module.exports =
 
 # Notifications reader from Azure Service Bus.
-# config = { connectionString, topic, subscription, options: { log }, filters: [ { name, filter } ], concurrency, waitForMessageTime }
+# config = { connectionString, topic, subscription, options: { log }, filters: [ { name, filter } ], concurrency, receiveBatchSize, waitForMessageTime }
 class NotificationsReader
   constructor: (@config) ->
     @serviceBusService = Promise.promisifyAll(
@@ -13,7 +13,8 @@ class NotificationsReader
     )
     _.defaults @config,
       concurrency: 25
-      waitForMessageTime: 1000
+      waitForMessageTime: 3000
+      receiveBatchSize: 5
 
   # Starts to receive notifications and calls the given function with every received message.
   # processMessage: (message) -> promise
@@ -21,10 +22,15 @@ class NotificationsReader
     @_createSubscription().then =>
       @_log "Listening for messages..."
       @_buildQueueWith processMessage
-      @_receive()
 
   _buildQueueWith: (processMessage) =>
-    @q = async.queue (message, callback) =>
+    @toReceive = async.queue (___, callback) =>
+      @_receive()
+        .then callback
+        .catch => callback("no messages")
+    , @config.concurrency * 2
+
+    @toProcess = async.queue (message, callback) =>
       response = try processMessage message
       return callback("The receiver didn't returned a Promise.") if not response?.then?
       response
@@ -32,7 +38,15 @@ class NotificationsReader
       .catch (err) -> callback(err or "unknown error")
     , @config.concurrency
 
-    @q.empty = @_receive
+    setInterval =>
+      if @toReceive.length() is 0 and @toReceive.running() is 0
+        @toReceive.push 1
+    , @config.waitForMessageTime
+
+    receiveChunk = => @toReceive.push [1..@config.receiveBatchSize]
+    @toProcess.empty = receiveChunk
+
+    receiveChunk()
 
   _createSubscription: =>
     (@_doWithTopic "createSubscription")()
@@ -63,8 +77,6 @@ class NotificationsReader
   _receive: =>
     (@_doWithTopic "receiveSubscriptionMessage") { isPeekLock: true }
       .spread @_process
-      .catch (e) =>
-        setTimeout @_receive, @config.waitForMessageTime # (no more messages)
 
   _process: (lockedMessage) =>
     messageId = lockedMessage.brokerProperties?.MessageId
@@ -74,7 +86,7 @@ class NotificationsReader
       @_log "--> Error processing message: #{error}. #{messageId}"
       (@_do "unlockMessage") lockedMessage
 
-    @q.push @_buildMessage(lockedMessage), (err) =>
+    @toProcess.push @_buildMessage(lockedMessage), (err) =>
       return onError(err) if err?
       (@_do "deleteMessage") lockedMessage
         .then =>
@@ -105,4 +117,5 @@ class NotificationsReader
       .bind(@serviceBusService, @config.topic, @config.subscription)
 
   _handleError: (error) => @_log error if error?
-  _log: (info) => console.log info if @config.options?.log
+  _log: (info) =>
+    console.log info if @config.options?.log

@@ -17,6 +17,7 @@ reader = new NotificationsReader
     { name: "customFilter", expression: "created = True" }
   ]
   concurrency: 25
+  receiveBatchSize: 5
   waitForMessageTime: 3000
 
 reader.run (message) =>
