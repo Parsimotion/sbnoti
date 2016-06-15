@@ -34,7 +34,7 @@ class NotificationsReader
       response = try processMessage message
       return callback("The receiver didn't returned a Promise.") if not response?.then?
       response
-      .then callback
+      .then -> callback()
       .catch (err) -> callback(err or "unknown error")
     , @config.concurrency
 
