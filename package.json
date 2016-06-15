@@ -5,7 +5,7 @@
     "type": "git",
     "url": "git://github.com/Parsimotion/sbnoti.git"
   },
-  "version": "1.0.4",
+  "version": "1.0.5",
   "main": "src/main.js",
   "dependencies": {
     "async": "^1.5.2",
