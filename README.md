@@ -14,7 +14,7 @@ reader = new NotificationsReader
   # optional:
   options: log: true
   filters: [
-    { name: "customFilter", expression: "created = True" }
+    { name: "theNameOfTheCustomFilter", expression: "created = True" }
   ]
   concurrency: 25
   receiveBatchSize: 5

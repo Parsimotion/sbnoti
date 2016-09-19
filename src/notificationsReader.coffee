@@ -41,7 +41,7 @@ class NotificationsReader
       response = try processMessage message
       return callback("The receiver didn't returned a Promise.") if not response?.then?
       response
-      .then callback
+      .then -> callback()
       .catch (err) -> callback(err or "unknown error")
     , @config.concurrency
 
@@ -71,7 +71,7 @@ class NotificationsReader
       Promise.all @config.filters.map (filter) => @_createFilter filter
 
   _deleteDefaultFilter: =>
-    (_doWithTopic "deleteRule") azure.Constants.ServiceBusConstants.DEFAULT_RULE_NAME
+    (@_doWithTopic "deleteRule") azure.Constants.ServiceBusConstants.DEFAULT_RULE_NAME
       .then => @_log "Default filter removed!"
       .catch @_handleError
 
