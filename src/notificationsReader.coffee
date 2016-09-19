@@ -11,15 +11,22 @@ class NotificationsReader
     @serviceBusService = Promise.promisifyAll(
       azure.createServiceBusService @config.connectionString
     )
+
     _.defaults @config,
       concurrency: 25
       waitForMessageTime: 3000
       receiveBatchSize: 5
+      deadLetter: false
+
+    if @config.deadLetter
+      @config.subscription += "/$DeadLetterQueue"
 
   # Starts to receive notifications and calls the given function with every received message.
   # processMessage: (message) -> promise
   run: (processMessage) =>
-    @_createSubscription().then =>
+    $subscription = if @config.deadLetter then Promise.resolve() else @_createSubscription()
+
+    $subscription.then =>
       @_log "Listening for messages..."
       @_buildQueueWith processMessage
 
