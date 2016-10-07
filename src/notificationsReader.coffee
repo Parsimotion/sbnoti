@@ -5,7 +5,7 @@ _ = require("lodash")
 module.exports =
 
 # Notifications reader from Azure Service Bus.
-# config = { connectionString, topic, subscription, options: { log }, filters: [ { name, filter } ], concurrency, receiveBatchSize, waitForMessageTime }
+# config = See README
 class NotificationsReader
   constructor: (@config) ->
     @serviceBusService = Promise.promisifyAll(
@@ -16,6 +16,7 @@ class NotificationsReader
       concurrency: 25
       waitForMessageTime: 3000
       receiveBatchSize: 5
+      log: false
       deadLetter: false
 
     if @config.deadLetter
@@ -125,4 +126,4 @@ class NotificationsReader
 
   _handleError: (error) => @_log error if error?
   _log: (info) =>
-    console.log info if @config.options?.log
+    console.log info if @config.log
