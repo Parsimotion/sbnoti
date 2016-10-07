@@ -19,6 +19,7 @@ reader = new NotificationsReader
   concurrency: 25
   receiveBatchSize: 5
   waitForMessageTime: 3000
+  deadLetter: false
 
 reader.run (message) =>
   # do something with message
