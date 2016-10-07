@@ -12,14 +12,15 @@ reader = new NotificationsReader
   topic: "the topic name"
   subscription: "the subscription name"
   # optional:
-  options: log: true
   filters: [
     { name: "theNameOfTheCustomFilter", expression: "created = True" }
   ]
+  # more optional (the values are the defaults):
+  log: false
+  deadLetter: false
   concurrency: 25
   receiveBatchSize: 5
   waitForMessageTime: 3000
-  deadLetter: false
 
 reader.run (message) =>
   # do something with message
