@@ -108,7 +108,7 @@ class NotificationsReader
       # Example: @strin3http://schemas.microsoft.com/2003/10/Serialization/p{"Changes":[{"Key":
       # ... (rest of the json) ... *a bunch of non printable characters*
       body
-        .substring body.indexOf("{")
+        .substring body.indexOf('{"')
         .replace /[^\x20-\x7E]+/g, ""
 
     try
