@@ -39,7 +39,7 @@ class NotificationsReader
     , @config.concurrency * 2
 
     @toProcess = async.queue (message, callback) =>
-      response = try processMessage message
+      response = try processMessage @_buildMessage(message), message
       return callback("The receiver didn't returned a Promise.") if not response?.then?
       response
       .then -> callback()
@@ -94,7 +94,7 @@ class NotificationsReader
       @_log "--> Error processing message: #{error}. #{messageId}"
       (@_do "unlockMessage") lockedMessage
 
-    @toProcess.push @_buildMessage(lockedMessage), (err) =>
+    @toProcess.push lockedMessage, (err) =>
       return onError(err) if err?
       (@_do "deleteMessage") lockedMessage
         .then =>
