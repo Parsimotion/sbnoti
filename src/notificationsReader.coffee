@@ -40,10 +40,17 @@ class NotificationsReader
 
     @toProcess = async.queue (message, callback) =>
       response = try processMessage @_buildMessage(message), message
-      return callback("The receiver didn't returned a Promise.") if not response?.then?
+      _cleanInterval = -> clearInterval message.interval
+
+      if not response?.then?
+        _cleanInterval()
+        return callback("The receiver didn't returned a Promise.")
+
       response
       .then -> callback()
       .catch (err) -> callback(err or "unknown error")
+      .finally -> _cleanInterval()
+
     , @config.concurrency
 
     setInterval =>
@@ -89,6 +96,12 @@ class NotificationsReader
   _process: (lockedMessage) =>
     messageId = lockedMessage.brokerProperties?.MessageId
     @_log "Receiving message... #{messageId}"
+
+    renewLock = =>
+      @_log "renewLock #{message.brokerProperties?.MessageId}"
+      (@_do "renewLockForMessage")(message)
+
+    lockedMessage.interval = setInterval renewLock, 1000 * 5
 
     onError = (error) =>
       @_log "--> Error processing message: #{error}. #{messageId}"
