@@ -54,7 +54,7 @@ class NotificationsReader
     , @config.concurrency
 
     setInterval =>
-      if @toReceive.length() is 0 and @toReceive.running() is 0
+      if @toReceive.length() is 0 and @toProcess.running() is 0
         @toReceive.push 1
     , @config.waitForMessageTime
 
