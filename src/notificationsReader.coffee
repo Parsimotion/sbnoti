@@ -98,8 +98,8 @@ class NotificationsReader
     @_log "Receiving message... #{messageId}"
 
     renewLock = =>
-      @_log "renewLock #{message.brokerProperties?.MessageId}"
-      (@_do "renewLockForMessage")(message)
+      @_log "renewLock #{messageId}"
+      (@_do "renewLockForMessage")(lockedMessage)
 
     lockedMessage.interval = setInterval renewLock, 1000 * 5
 
