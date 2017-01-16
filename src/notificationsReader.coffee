@@ -105,7 +105,7 @@ class NotificationsReader
 
     onError = (error) =>
       @_log "--> Error processing message: #{error}. #{messageId}"
-      (@_do "unlockMessage") lockedMessage
+      (@_do "unlockMessage") lockedMessage unless @config.deadLetter
 
     @toProcess.push lockedMessage, (err) =>
       return onError(err) if err?
