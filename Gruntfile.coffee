@@ -24,7 +24,7 @@ module.exports = (grunt) ->
     mochaTest:
       options:
         reporter: "spec"
-      src: ["src/**/*.spec.coffee"]
+      src: ["test/**/*.spec.coffee"]
 
     # Upgrade the version of the package
     bump:
