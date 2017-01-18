@@ -20,4 +20,5 @@ describe "DealUpdater", ->
       waitForMessageTime: 3000
 
   it "should subscribe to dead letter", ->
-    reader(deadLetterConfig).config.subscription.should.eql "una-subscription/$DeadLetterQueue"
+    reader(deadLetterConfig).config.subscription
+    .should.eql "una-subscription/$DeadLetterQueue"
