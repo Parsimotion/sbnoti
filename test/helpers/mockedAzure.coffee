@@ -5,6 +5,7 @@ module.exports = ->
     "azure":
       createServiceBusService: ->
         Promise.resolve { }
+      createSubscription: ->
 
   proxyquire("../../src/notificationsReader", stub)
 

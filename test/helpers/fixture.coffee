@@ -1,7 +1,11 @@
 _ = require("lodash")
 
-config = { subscription: "una-subscription", topic: "un-topic" }
+basicConfig = { subscription: "una-subscription", topic: "un-topic" }
+deadLetterConfig = _.merge deadLetter: true, basicConfig
+filtersConfig = _.merge filters: "un_filtro eq 'True'", basicConfig
 
-module.exports =
-  aConfig: config
-  deadLetterConfig: _.merge  deadLetter: true, config
+module.exports = {
+  basicConfig
+  deadLetterConfig
+  filtersConfig
+}

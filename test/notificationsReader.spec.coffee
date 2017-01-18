@@ -1,5 +1,5 @@
 require("../test/helpers/mockedAzure")()
-{ aConfig, deadLetterConfig } = require("../test/helpers/fixture")
+{ basicConfig, deadLetterConfig, filtersConfig } = require("../test/helpers/fixture")
 
 should = require("should")
 _ = require("lodash")
@@ -8,7 +8,7 @@ reader = null
 describe "DealUpdater", ->
 
   beforeEach ->
-    reader = (config = aConfig) => new NotificationsReader config
+    reader = (config = basicConfig) => new NotificationsReader config
 
   it "should have correct defaults", ->
     reader().config.should.eql
@@ -23,3 +23,4 @@ describe "DealUpdater", ->
   it "should subscribe to dead letter", ->
     reader(deadLetterConfig).config.subscription
     .should.eql "una-subscription/$DeadLetterQueue"
+
