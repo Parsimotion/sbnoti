@@ -5,7 +5,7 @@ should = require("should")
 _ = require("lodash")
 NotificationsReader = require("../src/notificationsReader")
 reader = null
-describe "DealUpdater", ->
+describe "NotificationsReader", ->
 
   beforeEach ->
     reader = (config = basicConfig) => new NotificationsReader config
@@ -24,3 +24,8 @@ describe "DealUpdater", ->
     reader(deadLetterConfig).config.subscription
     .should.eql "una-subscription/$DeadLetterQueue"
 
+  it "should create subscription", ->
+    reader(filtersConfig)._createSubscription()
+
+  it.only "should add filter to subscription", ->
+    reader(filtersConfig)._createSubscription()
