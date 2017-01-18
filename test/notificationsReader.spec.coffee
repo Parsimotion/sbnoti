@@ -13,6 +13,7 @@ describe "DealUpdater", ->
   it "should have correct defaults", ->
     reader().config.should.eql
       subscription: "una-subscription"
+      topic: "un-topic"
       concurrency: 25,
       deadLetter: false,
       log: false,
