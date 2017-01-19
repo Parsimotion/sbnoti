@@ -130,7 +130,6 @@ class NotificationsReader
       console.log "ERROR BUILDING THE MESSAGE:\n", message.body
 
   _do: (funcName) =>
-    console.log @serviceBusService
     @serviceBusService["#{funcName}Async"]
       .bind @serviceBusService
 
