@@ -18,8 +18,8 @@ module.exports = ->
             createSubscription: (a,b,callback) =>
               @spies["createSubscription"] a, b
               callback null, {}
-            createRule: (a,b,c,callback) =>
-              @spies["createRule"] a, b, c
+            createRule: (a,b,c,d,callback) =>
+              @spies["createRule"] a, b, c , d
               callback null, {}
             deleteRule: (a,b,c,callback) =>
               @spies["deleteRule"] a, b, c
