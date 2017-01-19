@@ -5,6 +5,8 @@ should = require("should")
 sinon = require("sinon")
 _ = require("lodash")
 NotificationsReader = require("../src/notificationsReader")
+Promise = require("bluebird")
+
 reader = null
 describe "NotificationsReader", ->
 
@@ -50,3 +52,18 @@ describe "NotificationsReader", ->
 
   it "should return undefined if message is not valid json", ->
     should.not.exists reader()._buildMessage body: "esto no es jsonizable"
+
+
+  it.only "should delete message if it finishes ok", ->
+    aReader = reader()
+    aReader._buildQueueWith Promise.resolve
+    message = brokerProperties: "el-message-id", body: JSON.stringify un: "json"
+    aReader._process message
+    aReader.toProcess.drain = ->
+      mockAzure.spies.deleteMessage
+      .withArgs message
+      .calledOnce.should.eql true
+
+      mockAzure.spies.unlockMessage
+      .withArgs message
+      .callCount.should.eql 0

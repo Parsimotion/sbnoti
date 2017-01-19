@@ -130,6 +130,7 @@ class NotificationsReader
       console.log "ERROR BUILDING THE MESSAGE:\n", message.body
 
   _do: (funcName) =>
+    console.log "#{funcName}Async" if !@serviceBusService["#{funcName}Async"]
     @serviceBusService["#{funcName}Async"]
       .bind @serviceBusService
 
