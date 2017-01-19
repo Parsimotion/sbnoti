@@ -27,7 +27,14 @@ describe "NotificationsReader", ->
     reader(deadLetterConfig).config.subscription
     .should.eql "una-subscription/$DeadLetterQueue"
 
-  it.only "should add filter to subscription", ->
+  it "should create a subscription", ->
+    reader()._createSubscription()
+    .then =>
+      mockAzure.spies.createSubscription
+      .withArgs "un-topic","una-subscription"
+      .calledOnce.should.eql true
+
+  it "should add filter to subscription", ->
     reader(filtersConfig)._createSubscription()
     .then =>
       mockAzure.spies.deleteRule.calledOnce.should.eql true
