@@ -43,3 +43,7 @@ describe "NotificationsReader", ->
       .withArgs "un-topic","una-subscription","un-filtro", { sqlExpressionFilter: 'un_filtro eq \'True\'' }
       .calledOnce.should.eql true
 
+  it "should build a message", ->
+    message = un: "mensaje"
+    reader()._buildMessage body: JSON.stringify message
+    .should.eql message
