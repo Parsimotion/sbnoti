@@ -47,3 +47,6 @@ describe "NotificationsReader", ->
     message = un: "mensaje"
     reader()._buildMessage body: JSON.stringify message
     .should.eql message
+
+  it "should return undefined if message is not valid json", ->
+    should.not.exists reader()._buildMessage body: "esto no es jsonizable"
