@@ -20,6 +20,8 @@ class NotificationsReader
       receiveBatchSize: 5
       log: false
       deadLetter: false
+      health:
+        redis: {}
 
     if @isReadingFromDeadLetter()
       @config.subscription += "/$DeadLetterQueue"
@@ -28,7 +30,7 @@ class NotificationsReader
   #Sets observers that will be notified on fail or success of messages
   _setObservers: =>
 
-    @observers = [ new DidLastRetry(@config.health), new DeadLetterQueue(@config.health) ]
+    @observers = [DidLastRetry, DeadLetterQueue].map (Observer) => new Observer(@)
 
   isReadingFromDeadLetter: => @config.deadLetter
 

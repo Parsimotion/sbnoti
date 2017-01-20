@@ -22,6 +22,7 @@ describe "NotificationsReader", ->
       log: false,
       receiveBatchSize: 5,
       waitForMessageTime: 3000
+      health: redis: {}
 
   it "should subscribe to dead letter", ->
     reader(deadLetterConfig).config.subscription
