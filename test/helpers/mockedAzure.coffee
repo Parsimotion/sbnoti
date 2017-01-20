@@ -18,17 +18,14 @@ module.exports = ->
 
         _functionsToSpy: -> ["createSubscription","createRule","deleteRule","unlockMessage","deleteMessage","receiveSubscriptionMessage"]
 
+        _reduceFunctions: (reducer) =>
+          @_functionsToSpy().reduce reducer, {}
+
         refreshSpies: =>
-          @spies = @_functionsToSpy()
-          .reduce (spies,key) =>
-            _.update spies, key, -> sinon.spy()
-          , {}
+          @spies = @_reduceFunctions (spies,key) => _.update spies, key, -> sinon.spy()
 
         createServiceBusService: =>
-          @_functionsToSpy()
-          .reduce (service,value) =>
-            _.update service, value, => asyncify @spies[value]
-          , {}
+          @_reduceFunctions (service,value) => _.update service, value, => asyncify @spies[value]
 
   proxyquire("../../src/notificationsReader", stub)
   stub.azure
