@@ -25,12 +25,10 @@ module.exports = ->
           , {}
 
         createServiceBusService: =>
-          createSubscription: asyncify @spies.createSubscription
-          createRule: asyncify @spies.createRule
-          deleteRule: asyncify @spies.deleteRule
-          unlockMessage: asyncify @spies.unlockMessage
-          deleteMessage: asyncify @spies.deleteMessage
-          receiveSubscriptionMessage: asyncify @spies.receiveSubscriptionMessage
+          @_functionsToSpy()
+          .reduce (service,value) =>
+            _.update service, value, => asyncify @spies[value]
+          , {}
 
   proxyquire("../../src/notificationsReader", stub)
   stub.azure
