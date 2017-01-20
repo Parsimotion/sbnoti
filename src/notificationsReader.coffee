@@ -14,7 +14,6 @@ class NotificationsReader
     @serviceBusService = Promise.promisifyAll(
       azure.createServiceBusService @config.connectionString
     )
-
     _.defaults @config,
       concurrency: 25
       waitForMessageTime: 3000
@@ -30,6 +29,10 @@ class NotificationsReader
   _setObservers: => @observers = [ new DidLastRetry(), new DeadLetterQueue() ]
 
   isReadingFromDeadLetter: => @config.deadLetter
+
+  #Gets the max delivery count of a topic
+    #TODO: AVERIGUAR ESTO
+  getMaxDeliveryCount: => Promise.resolve 10
 
   # Starts to receive notifications and calls the given function with every received message.
   # processMessage: (message) -> promise
@@ -48,7 +51,7 @@ class NotificationsReader
     , @config.concurrency * 2
 
     @toProcess = async.queue (message, callback) =>
-      response = try processMessage @_buildMessage(message), message
+      response = try processMessage @_buildMessage(message)
       _cleanInterval = -> clearInterval message.interval
 
       if not response?.then?
@@ -114,7 +117,7 @@ class NotificationsReader
 
     onError = (error) =>
       @_log "--> Error processing message: #{error}. #{messageId}"
-      @_notifyError lockedMessage
+      @_notifyError lockedMessage, error
       (@_do "unlockMessage") lockedMessage unless @isReadingFromDeadLetter()
 
     @toProcess.push lockedMessage, (err) =>
@@ -126,12 +129,12 @@ class NotificationsReader
         .catch (error) =>
           @_log "--> Error deleting message: #{error}. #{messageId}"
 
-  _notifyError: (message) => @_notify message, 'error'
+  _notifyError: (message, error) => @_notify message, 'error', error
 
   _notifySuccess: (message) => @_notify message, 'success'
 
-  _notify: (message, event) =>
-    @observers.forEach (observer) => observer[event] message, @
+  _notify: (message, event, opts) =>
+    @observers.forEach (observer) => observer[event] message, @, opts
 
   _buildMessage: (message) ->
     clean = (body) =>
