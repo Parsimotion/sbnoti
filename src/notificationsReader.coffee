@@ -29,8 +29,7 @@ class NotificationsReader
 
   #Sets observers that will be notified on fail or success of messages
   _setObservers: =>
-
-    @observers = [DidLastRetry, DeadLetterQueue].map (Observer) => new Observer(@)
+    @observers = [ DidLastRetry, DeadLetterQueue ].map (Observer) => new Observer @
 
   isReadingFromDeadLetter: => @config.deadLetter
 
