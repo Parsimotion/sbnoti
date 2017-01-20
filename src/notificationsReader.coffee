@@ -22,17 +22,19 @@ class NotificationsReader
       log: false
       deadLetter: false
 
-    if @config.deadLetter
+    if @isReadingFromDeadLetter()
       @config.subscription += "/$DeadLetterQueue"
-  #Sets observers that will be notified on fail or success of messages
     @_setObservers()
 
+  #Sets observers that will be notified on fail or success of messages
   _setObservers: => @observers = [ new DidLastRetry(), new DeadLetterQueue() ]
+
+  isReadingFromDeadLetter: => @config.deadLetter
 
   # Starts to receive notifications and calls the given function with every received message.
   # processMessage: (message) -> promise
   run: (processMessage) =>
-    $subscription = if @config.deadLetter then Promise.resolve() else @_createSubscription()
+    $subscription = if @isReadingFromDeadLetter() then Promise.resolve() else @_createSubscription()
 
     $subscription.then =>
       @_log "Listening for messages..."
@@ -113,7 +115,7 @@ class NotificationsReader
     onError = (error) =>
       @_log "--> Error processing message: #{error}. #{messageId}"
       @_notifyError lockedMessage
-      (@_do "unlockMessage") lockedMessage unless @config.deadLetter
+      (@_do "unlockMessage") lockedMessage unless @isReadingFromDeadLetter()
 
     @toProcess.push lockedMessage, (err) =>
       return onError(err) if err?
