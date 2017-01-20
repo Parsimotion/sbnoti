@@ -16,8 +16,10 @@ module.exports = ->
         constructor: ->
           @refreshSpies()
 
+        _functionsToSpy: -> ["createSubscription","createRule","deleteRule","unlockMessage","deleteMessage","receiveSubscriptionMessage"]
+
         refreshSpies: =>
-          @spies = ["createSubscription","createRule","deleteRule","unlockMessage","deleteMessage","receiveSubscriptionMessage"]
+          @spies = @_functionsToSpy()
           .reduce (spies,key) =>
             _.update spies, key, -> sinon.spy()
           , {}
