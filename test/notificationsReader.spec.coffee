@@ -15,6 +15,7 @@ describe "NotificationsReader", ->
 
   it "should have correct defaults", ->
     reader().config.should.eql
+      app: "una-app"
       subscription: "una-subscription"
       topic: "un-topic"
       concurrency: 25,

@@ -3,8 +3,8 @@ Promise = require("bluebird")
 
 module.exports =
   class RedisObserver
-    constructor: (@reader) ->
-      config = @reader.config.health or {}
+    constructor: (readerConfig) ->
+      config = readerConfig.health or {}
       @redis = Redis.createClient config.redis.port, config.redis.host, db: config.redis.db
       @redis.auth config.redis.auth if config.redis.auth
 
@@ -12,8 +12,8 @@ module.exports =
 
     success: ->
 
-    publish: (message, value) =>
-      @redis.publishAsync @_getChannel(message), @_buildValue value
+    publish: (notification, value) =>
+      @redis.publishAsync @_getChannel(notification), @_buildValue value
 
     _buildValue: (value) ->
       try
@@ -21,8 +21,7 @@ module.exports =
       catch
         value
 
-    _getChannel: ({ brokerProperties: { MessageId }, body }) =>
+    _getChannel: ({ message: { brokerProperties: { MessageId }, body }, app, topic, subscription }) =>
       { CompanyId, ResourceId } = body
-      { app, topic, subscription } = @reader.config
       "health-message/#{app}/#{CompanyId}/#{topic}/#{subscription}/#{ResourceId}"
 

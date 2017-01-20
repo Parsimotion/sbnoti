@@ -29,7 +29,7 @@ class NotificationsReader
 
   #Sets observers that will be notified on fail or success of messages
   _setObservers: =>
-    @observers = [ DidLastRetry, DeadLetterQueue ].map (Observer) => new Observer @
+    @observers = [ DidLastRetry, DeadLetterQueue ].map (Observer) => new Observer @config
 
   isReadingFromDeadLetter: => @config.deadLetter
 
@@ -137,7 +137,8 @@ class NotificationsReader
   _notifySuccess: (message) => @_notify message, 'success'
 
   _notify: (message, event, opts) =>
-    @observers.forEach (observer) => observer[event] message, @, opts
+    notification = _.merge { message }, _.pick @config, ["app","topic","subscription"]
+    @observers.forEach (observer) => observer[event] notification, @, opts
 
   _buildMessage: (message) ->
     clean = (body) =>

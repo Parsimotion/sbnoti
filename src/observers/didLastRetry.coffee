@@ -3,9 +3,9 @@ RedisObserver = require("./redisObserver")
 module.exports =
   class DidLastRetry extends RedisObserver
 
-    error: (message, error) =>
-      @reader.getMaxDeliveryCount()
+    error: (notification, reader, error) =>
+      reader.getMaxDeliveryCount()
       .then (maxDeliveryCount) =>
-        if message.brokerProperties.DeliveryCount > maxDeliveryCount
-          @publish message, { success: false, error }
+        if notification.message.brokerProperties.DeliveryCount > maxDeliveryCount
+          @publish notification, { success: false, error }
 
