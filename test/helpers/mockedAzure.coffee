@@ -2,8 +2,14 @@ proxyquire = require("proxyquire")
 Promise = require("bluebird")
 { spies } = require("./fixture")
 sinon = require("sinon")
-
+_ = require("lodash")
 module.exports = ->
+
+  asyncify = (fn) ->
+    (args...) ->
+      fn args...
+      _(args).last() null, {}
+
   stub =
     "azure":
       new class AzureMock
@@ -17,24 +23,18 @@ module.exports = ->
             unlockMessage: sinon.spy()
             deleteMessage: sinon.spy()
         createServiceBusService: =>
-            createSubscription: (topic,subscription,callback) =>
+            createSubscription: asyncify (topic,subscription) =>
               @spies.createSubscription topic, subscription
-              callback null, {}
-            createRule: (topic, subscription, name, expression, callback) =>
+            createRule: asyncify (topic, subscription, name, expression) =>
               @spies.createRule topic, subscription, name , expression
-              callback null, {}
-            deleteRule: (topic,subscription,rule,callback) =>
+            deleteRule: asyncify (topic,subscription,rule,callback) =>
               @spies.deleteRule topic, subscription, rule
-              callback null, {}
-            unlockMessage: (message, callback) =>
+            unlockMessage: asyncify (message) =>
               @spies.unlockMessage message
-              callback null, {}
-            deleteMessage: (message, callback) =>
+            deleteMessage: asyncify (message) =>
               @spies.deleteMessage message
-              callback null, {}
-            receiveSubscriptionMessage: (topic, subscription, callback) =>
+            receiveSubscriptionMessage: asyncify (topic, subscription) =>
               @spies.receiveSubscriptionMessage topic, subscription
-              callback null, {}
 
   proxyquire("../../src/notificationsReader", stub)
   stub.azure
