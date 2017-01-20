@@ -31,18 +31,6 @@ module.exports = ->
           unlockMessage: asyncify @spies.unlockMessage
           deleteMessage: asyncify @spies.deleteMessage
           receiveSubscriptionMessage: asyncify @spies.receiveSubscriptionMessage
-            # createSubscription: asyncify (topic,subscription) =>
-            #   @spies.createSubscription topic, subscription
-            # createRule: asyncify (topic, subscription, name, expression) =>
-            #   @spies.createRule topic, subscription, name , expression
-            # deleteRule: asyncify (topic,subscription,rule,callback) =>
-            #   @spies.deleteRule topic, subscription, rule
-            # unlockMessage: asyncify (message) =>
-            #   @spies.unlockMessage message
-            # deleteMessage: asyncify (message) =>
-            #   @spies.deleteMessage message
-            # receiveSubscriptionMessage: asyncify (topic, subscription) =>
-            #   @spies.receiveSubscriptionMessage topic, subscription
 
   proxyquire("../../src/notificationsReader", stub)
   stub.azure
