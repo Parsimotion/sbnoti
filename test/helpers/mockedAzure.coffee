@@ -17,24 +17,23 @@ module.exports = ->
             unlockMessage: sinon.spy()
             deleteMessage: sinon.spy()
         createServiceBusService: =>
-            createSubscription: (a,b,callback) =>
-              @spies["createSubscription"] a, b
+            createSubscription: (topic,subscription,callback) =>
+              @spies.createSubscription topic, subscription
               callback null, {}
-            createRule: (a,b,c,d,callback) =>
-              @spies["createRule"] a, b, c , d
+            createRule: (topic, subscription, name, expression, callback) =>
+              @spies.createRule topic, subscription, name , expression
               callback null, {}
-            deleteRule: (a,b,c,callback) =>
-              @spies["deleteRule"] a, b, c
+            deleteRule: (topic,subscription,rule,callback) =>
+              @spies.deleteRule topic, subscription, rule
               callback null, {}
             unlockMessage: (message, callback) =>
-              console.log "LIBEEEEEEERA"
-              @spies["unlockMessage"] message
+              @spies.unlockMessage message
               callback null, {}
             deleteMessage: (message, callback) =>
-              console.log "BORRRRRRRRRRRA"
-              @spies["deleteMessage"] message
+              @spies.deleteMessage message
               callback null, {}
-            receiveSubscriptionMessage: (a,b,callback) =>
+            receiveSubscriptionMessage: (topic, subscription, callback) =>
+              @spies.receiveSubscriptionMessage topic, subscription
               callback null, {}
 
   proxyquire("../../src/notificationsReader", stub)

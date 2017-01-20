@@ -55,23 +55,39 @@ describe "NotificationsReader", ->
 
 
   it "should delete message if it finishes ok", ->
-    aReader = reader()
-    aReader._buildQueueWith Promise.resolve
-    aReader._process message
-    aReader.toProcess.drain = ->
-      mockAzure.spies.deleteMessage
-      .withArgs message
-      .calledOnce.should.eql true
+    assertAfterProcess {
+      message
+      process: Promise.resolve
+      assertion: ->
+        mockAzure.spies.deleteMessage
+        .withArgs message
+        .calledOnce.should.eql true
 
-      mockAzure.spies.unlockMessage
-      .withArgs message
-      .called.should.eql false
+        mockAzure.spies.unlockMessage
+        .withArgs message
+        .called.should.eql false
+    }
 
-  it "should unlock message if it finishes with errors", ->
-    aReader = reader()
-    aReader._buildQueueWith Promise.reject
-    aReader._process message
-    aReader.toProcess.drain = ->
-      mockAzure.spies.unlockMessage
-      .withArgs message
-      .calledOnce.should.eql true
+  it "should unlock message if it finishes with errors when it isn't dead letter", ->
+    assertAfterProcess {
+      message
+      process: Promise.reject
+      assertion: ->
+        mockAzure.spies.unlockMessage
+        .withArgs message
+        .calledOnce.should.eql true
+    }
+
+  it "should not unlock message if it finishes with errors when it is dead letter", ->
+    assertAfterProcess {
+      message
+      process: Promise.reject
+      assertion: ->
+        mockAzure.spies.unlockMessage
+        .called.should.eql false
+    }, reader deadLetterConfig
+
+assertAfterProcess = ({ message, process, assertion }, aReader = reader()) ->
+  aReader._buildQueueWith process
+  aReader._process message
+  aReader.toProcess.drain = assertion
