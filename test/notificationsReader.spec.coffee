@@ -1,3 +1,4 @@
+require("../test/helpers/mockedRedis")()
 mockAzure = require("../test/helpers/mockedAzure")()
 { basicConfig, deadLetterConfig, filtersConfig, message } = require("../test/helpers/fixture")
 

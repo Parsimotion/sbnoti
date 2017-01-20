@@ -1,14 +1,16 @@
-redis = require("../services/redis")
+Redis = require("../services/redis")
 Promise = require("bluebird")
 
 module.exports =
   class RedisObserver
+    constructor: (config = { redis: { } }) ->
+      @redis = Redis.createClient config.redis.port, config.redis.host, db: config.redis.db
+      @redis.auth config.redis.auth if config.redis.auth
 
     error: ->
     success: ->
     publish: (key, value) =>
-      Promise.resolve()
-      #redis.setAsync key, @buildValue value
+      @redis.setAsync key, @buildValue value
     buildValue: (value) ->
       try
         JSON.stringify value
