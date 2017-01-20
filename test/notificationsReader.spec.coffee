@@ -2,16 +2,13 @@ mockAzure = require("../test/helpers/mockedAzure")()
 { basicConfig, deadLetterConfig, filtersConfig, message } = require("../test/helpers/fixture")
 
 should = require("should")
-sinon = require("sinon")
-_ = require("lodash")
 NotificationsReader = require("../src/notificationsReader")
 Promise = require("bluebird")
 
-reader = null
+reader = (config = basicConfig) => new NotificationsReader config
 describe "NotificationsReader", ->
 
   beforeEach ->
-    reader = (config = basicConfig) => new NotificationsReader config
     mockAzure.refreshSpies()
 
 
