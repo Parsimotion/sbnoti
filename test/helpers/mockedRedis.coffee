@@ -5,12 +5,12 @@ _ = require("lodash")
 module.exports = ->
   class MockRedisClient
     auth: ->
-    setAsync: (key) -> Promise.resolve()
+    publishAsync: (key) -> Promise.resolve()
+
 
   stub =
     "../services/redis":
       class MockRedis
         @createClient: -> new MockRedisClient()
-
   proxyquire("../../src/observers/redisObserver", stub)
 

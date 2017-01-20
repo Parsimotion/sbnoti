@@ -10,8 +10,9 @@ module.exports =
     error: ->
     success: ->
     publish: (key, value) =>
-      @redis.setAsync key, @buildValue value
-    buildValue: (value) ->
+      @redis.publishAsync key, @_buildValue value
+
+    _buildValue: (value) ->
       try
         JSON.stringify value
       catch
