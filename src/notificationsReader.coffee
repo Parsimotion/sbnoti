@@ -28,8 +28,9 @@ class NotificationsReader
     @_setObservers()
 
   #Sets observers that will be notified on fail or success of messages
+  #Turbio?
   _setObservers: =>
-    @observers = [ DidLastRetry, DeadLetterQueue ].map (Observer) => new Observer @config
+    @observers = _.compact [ DidLastRetry, DeadLetterQueue ].map (Observer) => try new Observer @config
 
   isReadingFromDeadLetter: => @config.deadLetter
 

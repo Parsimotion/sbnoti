@@ -5,8 +5,12 @@ module.exports =
   class RedisObserver
     constructor: (readerConfig) ->
       config = readerConfig.health or {}
+      @verifyRedisConfig config.redis
       @redis = Redis.createClient config.redis.port, config.redis.host, db: config.redis.db
       @redis.auth config.redis.auth if config.redis.auth
+
+    verifyRedisConfig: (config) =>
+      throw new Error("redis_not_configured") unless config?.port? and config?.username? and config?.db?
 
     error: ->
 
