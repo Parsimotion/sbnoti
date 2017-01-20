@@ -28,7 +28,7 @@ module.exports = ->
               callback null, {}
             unlockMessage: (message, callback) =>
               console.log "LIBEEEEEEERA"
-              @spies["unlockMessage"]
+              @spies["unlockMessage"] message
               callback null, {}
             deleteMessage: (message, callback) =>
               console.log "BORRRRRRRRRRRA"

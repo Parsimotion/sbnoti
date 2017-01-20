@@ -1,5 +1,5 @@
 mockAzure = require("../test/helpers/mockedAzure")()
-{ basicConfig, deadLetterConfig, filtersConfig } = require("../test/helpers/fixture")
+{ basicConfig, deadLetterConfig, filtersConfig, message } = require("../test/helpers/fixture")
 
 should = require("should")
 sinon = require("sinon")
@@ -54,10 +54,9 @@ describe "NotificationsReader", ->
     should.not.exists reader()._buildMessage body: "esto no es jsonizable"
 
 
-  it.only "should delete message if it finishes ok", ->
+  it "should delete message if it finishes ok", ->
     aReader = reader()
     aReader._buildQueueWith Promise.resolve
-    message = brokerProperties: "el-message-id", body: JSON.stringify un: "json"
     aReader._process message
     aReader.toProcess.drain = ->
       mockAzure.spies.deleteMessage
@@ -66,4 +65,13 @@ describe "NotificationsReader", ->
 
       mockAzure.spies.unlockMessage
       .withArgs message
-      .callCount.should.eql 0
+      .called.should.eql false
+
+  it "should unlock message if it finishes with errors", ->
+    aReader = reader()
+    aReader._buildQueueWith Promise.reject
+    aReader._process message
+    aReader.toProcess.drain = ->
+      mockAzure.spies.unlockMessage
+      .withArgs message
+      .calledOnce.should.eql true
