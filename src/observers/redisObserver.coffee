@@ -1,5 +1,7 @@
-redis = require("./services/redis")
+redis = require("../services/redis")
 
 module.exports =
   class RedisObserver
 
+    error: ->
+    success: ->

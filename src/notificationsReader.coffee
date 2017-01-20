@@ -1,7 +1,10 @@
-azure = require("azure")
-Promise = require("bluebird")
-async = require("async")
 _ = require("lodash")
+azure = require("azure")
+async = require("async")
+Promise = require("bluebird")
+DidLastRetry = require("./observers/didLastRetry")
+DeadLetterQueue = require("./observers/deadLetterSucceeded")
+
 module.exports =
 
 # Notifications reader from Azure Service Bus.
@@ -24,8 +27,7 @@ class NotificationsReader
   #Sets observers that will be notified on fail or success of messages
     @_setObservers()
 
-  _setObservers: =>
-    @observers = []
+  _setObservers: => @observers = [ new DidLastRetry(), new DeadLetterQueue() ]
 
   # Starts to receive notifications and calls the given function with every received message.
   # processMessage: (message) -> promise
