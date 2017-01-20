@@ -15,14 +15,12 @@ module.exports = ->
       new class AzureMock
         constructor: ->
           @refreshSpies()
+
         refreshSpies: =>
-          @spies =
-            createSubscription: sinon.spy()
-            createRule: sinon.spy()
-            deleteRule: sinon.spy()
-            unlockMessage: sinon.spy()
-            deleteMessage: sinon.spy()
-            receiveSubscriptionMessage: sinon.spy()
+          @spies = ["createSubscription","createRule","deleteRule","unlockMessage","deleteMessage","receiveSubscriptionMessage"]
+          .reduce (spies,key) =>
+            _.update spies, key, -> sinon.spy()
+          , {}
 
         createServiceBusService: =>
           createSubscription: asyncify @spies.createSubscription
