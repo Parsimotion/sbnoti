@@ -21,6 +21,11 @@ class NotificationsReader
 
     if @config.deadLetter
       @config.subscription += "/$DeadLetterQueue"
+  #Sets observers that will be notified on fail or success of messages
+    @_setObservers()
+
+  _setObservers: =>
+    @observers = []
 
   # Starts to receive notifications and calls the given function with every received message.
   # processMessage: (message) -> promise
@@ -105,15 +110,24 @@ class NotificationsReader
 
     onError = (error) =>
       @_log "--> Error processing message: #{error}. #{messageId}"
+      @_notifyError lockedMessage
       (@_do "unlockMessage") lockedMessage unless @config.deadLetter
 
     @toProcess.push lockedMessage, (err) =>
       return onError(err) if err?
+      @_notifySuccess lockedMessage
       (@_do "deleteMessage") lockedMessage
         .then =>
           @_log "--> Message #{messageId} processed OK."
         .catch (error) =>
           @_log "--> Error deleting message: #{error}. #{messageId}"
+
+  _notifyError: (message) => @_notify message, 'error'
+
+  _notifySuccess: (message) => @_notify message, 'success'
+
+  _notify: (message, event) =>
+    @observers.forEach (observer) => observer[event] message, @
 
   _buildMessage: (message) ->
     clean = (body) =>
