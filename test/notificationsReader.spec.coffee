@@ -91,14 +91,13 @@ describe "NotificationsReader", ->
 
     describe "Health observers", ->
 
-      it.only "when fully configured, should add health observers", ->
+      it "when fully configured, should add health observers", ->
         redis = healthConfig.health.redis
         aReader = reader(healthConfig)
-        aReader.observers.length.should.eql 2
-        # [ DidLastRetry, DeadLetterSucceeded ].forEach (TObserver) =>
-        #   _.some aReader.observers, (observer) =>
-        #     console.log observer instanceof TObserver
-        #     (observer instanceof TObserver).should.eql true
+        aReader.observers.forEach (observer) =>
+          (observer instanceof DidLastRetry or
+          observer instanceof DeadLetterSucceeded)
+          .should.eql true
 
       it "when not fully configured, should not add health observers", ->
         reader().observers.should.eql [ ]
