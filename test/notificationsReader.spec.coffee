@@ -6,8 +6,9 @@ DeadLetterSucceeded = require("../src/observers/deadLetterSucceeded")
 should = require("should")
 NotificationsReader = require("../src/notificationsReader")
 Promise = require("bluebird")
-
+_ = require("lodash")
 reader = (config = basicConfig) => new NotificationsReader config
+
 describe "NotificationsReader", ->
 
   beforeEach ->
@@ -89,14 +90,26 @@ describe "NotificationsReader", ->
       }, reader deadLetterConfig
 
     describe "Health observers", ->
+
       it "when fully configured, should add health observers", ->
         redis = healthConfig.health.redis
         reader(healthConfig).observers.should.eql [ new DidLastRetry(redis), new DeadLetterSucceeded(redis)]
+
       it "when not fully configured, should not add health observers", ->
         reader().observers.should.eql [ ]
 
+      it "should publish on error if last retry", ->
+        redis = healthConfig.health.redis
+        assertAfterProcess {
+          message
+          process: Promise.reject
+          assertion: ->
+
+        }, reader healthConfig
+
 
 assertAfterProcess = ({ message, process, assertion }, aReader = reader()) ->
+  #parsedMessage = _.assign message, body: JSON.parse message.body
   aReader._buildQueueWith process
   aReader._process message
   aReader.toProcess.drain = assertion

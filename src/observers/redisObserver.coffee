@@ -21,7 +21,7 @@ module.exports =
         value
 
     _getChannel: ({ message: { brokerProperties: { MessageId }, body }, app, topic, subscription }) =>
-      { CompanyId, ResourceId } = body
-      console.log "_getChannel", "health-message/#{app}/#{CompanyId}/#{topic}/#{subscription}/#{ResourceId}"
-      "health-message/#{app}/#{CompanyId}/#{topic}/#{subscription}/#{ResourceId}"
+        parsedBody = JSON.parse body
+        { CompanyId, ResourceId } = parsedBody
+        "health-message/#{app}/#{CompanyId}/#{topic}/#{subscription}/#{ResourceId}"
 

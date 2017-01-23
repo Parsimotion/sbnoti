@@ -30,7 +30,7 @@ class NotificationsReader
   _hasCompleteHealthConfig: =>
     health = @config.health
     redis = health?.redis
-    health and redis.host? and redis.port? and redis.auth?
+    health and redis.host? and redis.port? and redis.auth? and redis.db?
 
   #Sets observers that will be notified on fail or success of messages
   _setObservers: =>
