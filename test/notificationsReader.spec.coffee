@@ -104,12 +104,17 @@ describe "NotificationsReader", ->
 
       it "should publish on error if last retry", ->
         redis = healthConfig.health.redis
+        aReader = reader healthConfig
         assertAfterProcess {
           message
           process: Promise.reject
           assertion: ->
-
-        }, reader healthConfig
+            process.nextTick =>
+              _(aReader.observers).find (it) => it instanceof DidLastRetry
+              .redis.spies.publishAsync
+              .withArgs "health-message/una-app/123/un-topic/una-subscription/456", JSON.stringify {"success":false,"error":{"un":"json","CompanyId":123,"ResourceId":456}}
+              .callCount.should.eql 1
+        }, aReader
 
 
 assertAfterProcess = ({ message, process, assertion }, aReader = reader()) ->
