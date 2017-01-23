@@ -171,4 +171,4 @@ describe "NotificationsReader", ->
 assertAfterProcess = ({ message, process, assertion }, aReader = reader()) ->
   aReader._buildQueueWith process
   aReader._process message
-  aReader.toProcess.drain = assertion #TODO: poner nextTick acá
+  aReader.toProcess.drain = assertion
