@@ -103,7 +103,6 @@ describe "NotificationsReader", ->
         reader().observers.should.eql [ ]
 
       it "should publish on error if last retry", ->
-        redis = healthConfig.health.redis
         aReader = reader healthConfig
         assertAfterProcess {
           message
@@ -117,7 +116,6 @@ describe "NotificationsReader", ->
         }, aReader
 
       it "should not publish on error if it is not the last retry", ->
-        redis = healthConfig.health.redis
         aReader = reader healthConfig
         assertAfterProcess {
           message: retryableMessage
@@ -129,8 +127,19 @@ describe "NotificationsReader", ->
               .called.should.eql false
         }, aReader
 
+      it "should not publish if it runs succesfully", ->
+        aReader = reader healthConfig
+        assertAfterProcess {
+          message: retryableMessage
+          process: Promise.resolve
+          assertion: ->
+            process.nextTick =>
+              _(aReader.observers).find (it) => it instanceof DidLastRetry
+              .redis.spies.publishAsync
+              .called.should.eql false
+        }, aReader
+
 assertAfterProcess = ({ message, process, assertion }, aReader = reader()) ->
-  #parsedMessage = _.assign message, body: JSON.parse message.body
   aReader._buildQueueWith process
   aReader._process message
   aReader.toProcess.drain = assertion
