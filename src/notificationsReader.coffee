@@ -24,8 +24,10 @@ class NotificationsReader
         redis: {}
 
     if @isReadingFromDeadLetter()
-      @config.subscription += "/$DeadLetterQueue"
+      @config.subscription += @deadLetterSuffix
     @_setObservers()
+
+  deadLetterSuffix: "/$DeadLetterQueue"
 
   _hasCompleteHealthConfig: =>
     health = @config.health

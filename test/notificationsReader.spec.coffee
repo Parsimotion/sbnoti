@@ -164,6 +164,7 @@ describe "NotificationsReader", ->
               process.nextTick =>
                 _(aReader.observers).find (it) => it instanceof DeadLetterSucceeded
                 .redis.spies.publishAsync
+                .withArgs "health-message/una-app/123/un-topic/una-subscription/456", JSON.stringify success:true
                 .callCount.should.eql 1
           }, aReader
 

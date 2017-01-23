@@ -5,4 +5,6 @@ module.exports =
 
     success: (notification, reader) =>
       if reader.isReadingFromDeadLetter()
+        _.assign notification,
+          subscription: notification.subscription.replace reader.deadLetterSuffix, ''
         @publish notification, success: true
