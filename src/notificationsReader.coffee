@@ -27,15 +27,15 @@ class NotificationsReader
       @config.subscription += "/$DeadLetterQueue"
     @_setObservers()
 
-  #Sets observers that will be notified on fail or success of messages
-  hasCompleteHealthConfig: =>
+  _hasCompleteHealthConfig: =>
     health = @config.health
     redis = health?.redis
     health and redis.host? and redis.port? and redis.auth?
 
+  #Sets observers that will be notified on fail or success of messages
   _setObservers: =>
     @observers = []
-    if @hasCompleteHealthConfig()
+    if @_hasCompleteHealthConfig()
       @observers = @observers.concat [ DidLastRetry, DeadLetterQueue ].map (Observer) => new Observer @config.health.redis
 
   isReadingFromDeadLetter: => @config.deadLetter

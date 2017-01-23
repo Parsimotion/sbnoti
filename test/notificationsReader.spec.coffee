@@ -45,11 +45,10 @@ describe "NotificationsReader", ->
       .withArgs "un-topic","una-subscription","un-filtro", { sqlExpressionFilter: 'un_filtro eq \'True\'' }
       .calledOnce.should.eql true
 
-  #TODO: VER QUE SE ROMPE CON ESTO
-  it.skip "should build a message", ->
-    message = un: "mensaje"
-    reader()._buildMessage body: JSON.stringify message
-    .should.eql message
+  it "should build a message", ->
+    aMessage = un: "mensaje"
+    reader()._buildMessage body: JSON.stringify aMessage
+    .should.eql aMessage
 
   it "should return undefined if message is not valid json", ->
     should.not.exists reader()._buildMessage body: "esto no es jsonizable"
