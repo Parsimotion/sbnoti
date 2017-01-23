@@ -1,6 +1,6 @@
 require("../test/helpers/mockedRedis")()
 mockAzure = require("../test/helpers/mockedAzure")()
-{ basicConfig, deadLetterConfig, filtersConfig, message, healthConfig } = require("../test/helpers/fixture")
+{ retryableMessage, basicConfig, deadLetterConfig, filtersConfig, message, healthConfig } = require("../test/helpers/fixture")
 DidLastRetry = require("../src/observers/didLastRetry")
 DeadLetterSucceeded = require("../src/observers/deadLetterSucceeded")
 should = require("should")
@@ -116,6 +116,18 @@ describe "NotificationsReader", ->
               .callCount.should.eql 1
         }, aReader
 
+      it "should not publish on error if it is not the last retry", ->
+        redis = healthConfig.health.redis
+        aReader = reader healthConfig
+        assertAfterProcess {
+          message: retryableMessage
+          process: Promise.reject
+          assertion: ->
+            process.nextTick =>
+              _(aReader.observers).find (it) => it instanceof DidLastRetry
+              .redis.spies.publishAsync
+              .called.should.eql false
+        }, aReader
 
 assertAfterProcess = ({ message, process, assertion }, aReader = reader()) ->
   #parsedMessage = _.assign message, body: JSON.parse message.body

@@ -19,6 +19,12 @@ message =
     MessageId: "el-message-id"
     DeliveryCount: 11
 
+retryableMessage = _(_.clone(message))
+  .assign
+      brokerProperties:
+        MessageId: "otro-message-id"
+        DeliveryCount: 1
+  .value()
 
 module.exports = {
   basicConfig
@@ -26,4 +32,5 @@ module.exports = {
   filtersConfig
   healthConfig
   message
+  retryableMessage
 }
