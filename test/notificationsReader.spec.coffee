@@ -102,44 +102,72 @@ describe "NotificationsReader", ->
       it "when not fully configured, should not add health observers", ->
         reader().observers.should.eql [ ]
 
-      it "should publish on error if last retry", ->
-        aReader = reader healthConfig
-        assertAfterProcess {
-          message
-          process: Promise.reject
-          assertion: ->
-            process.nextTick =>
-              _(aReader.observers).find (it) => it instanceof DidLastRetry
-              .redis.spies.publishAsync
-              .withArgs "health-message/una-app/123/un-topic/una-subscription/456", JSON.stringify {"success":false,"error":{"un":"json","CompanyId":123,"ResourceId":456}}
-              .callCount.should.eql 1
-        }, aReader
+      describe "Did Last Retry observer", ->
 
-      it "should not publish on error if it is not the last retry", ->
-        aReader = reader healthConfig
-        assertAfterProcess {
-          message: retryableMessage
-          process: Promise.reject
-          assertion: ->
-            process.nextTick =>
-              _(aReader.observers).find (it) => it instanceof DidLastRetry
-              .redis.spies.publishAsync
-              .called.should.eql false
-        }, aReader
+        it "should publish on error if last retry", ->
+          aReader = reader healthConfig
+          assertAfterProcess {
+            message
+            process: Promise.reject
+            assertion: ->
+              process.nextTick =>
+                _(aReader.observers).find (it) => it instanceof DidLastRetry
+                .redis.spies.publishAsync
+                .withArgs "health-message/una-app/123/un-topic/una-subscription/456", JSON.stringify {"success":false,"error":{"un":"json","CompanyId":123,"ResourceId":456}}
+                .callCount.should.eql 1
+          }, aReader
 
-      it "should not publish if it runs succesfully", ->
-        aReader = reader healthConfig
-        assertAfterProcess {
-          message: retryableMessage
-          process: Promise.resolve
-          assertion: ->
-            process.nextTick =>
-              _(aReader.observers).find (it) => it instanceof DidLastRetry
-              .redis.spies.publishAsync
-              .called.should.eql false
-        }, aReader
+        it "should not publish on error if it is not the last retry", ->
+          aReader = reader healthConfig
+          assertAfterProcess {
+            message: retryableMessage
+            process: Promise.reject
+            assertion: ->
+              process.nextTick =>
+                _(aReader.observers).find (it) => it instanceof DidLastRetry
+                .redis.spies.publishAsync
+                .called.should.eql false
+          }, aReader
+
+        it "should not publish if it runs successfully", ->
+          aReader = reader healthConfig
+          assertAfterProcess {
+            message: retryableMessage
+            process: Promise.resolve
+            assertion: ->
+              process.nextTick =>
+                _(aReader.observers).find (it) => it instanceof DidLastRetry
+                .redis.spies.publishAsync
+                .called.should.eql false
+          }, aReader
+
+      describe "Dead Letter Succeeded observer", ->
+
+        it "should not publish if it runs with error", ->
+          aReader = reader _.merge { }, healthConfig, deadLetter:true
+          assertAfterProcess {
+            message: retryableMessage
+            process: Promise.reject
+            assertion: ->
+              process.nextTick =>
+                _(aReader.observers).find (it) => it instanceof DeadLetterSucceeded
+                .redis.spies.publishAsync
+                .called.should.eql false
+          }, aReader
+
+        it "should publish if it runs successfully", ->
+          aReader = reader _.merge { }, healthConfig, deadLetter:true
+          assertAfterProcess {
+            message: retryableMessage
+            process: Promise.resolve
+            assertion: ->
+              process.nextTick =>
+                _(aReader.observers).find (it) => it instanceof DeadLetterSucceeded
+                .redis.spies.publishAsync
+                .callCount.should.eql 1
+          }, aReader
 
 assertAfterProcess = ({ message, process, assertion }, aReader = reader()) ->
   aReader._buildQueueWith process
   aReader._process message
-  aReader.toProcess.drain = assertion
+  aReader.toProcess.drain = assertion #TODO: poner nextTick acá
