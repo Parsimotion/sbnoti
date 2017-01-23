@@ -28,9 +28,15 @@ class NotificationsReader
     @_setObservers()
 
   #Sets observers that will be notified on fail or success of messages
-  #Turbio?
+  hasCompleteHealthConfig: =>
+    health = @config.health
+    redis = health?.redis
+    health and redis.host? and redis.port? and redis.auth?
+
   _setObservers: =>
-    @observers = _.compact [ DidLastRetry, DeadLetterQueue ].map (Observer) => try new Observer @config
+    @observers = []
+    if @hasCompleteHealthConfig()
+      @observers = @observers.concat [ DidLastRetry, DeadLetterQueue ].map (Observer) => new Observer @config.health.redis
 
   isReadingFromDeadLetter: => @config.deadLetter
 
