@@ -3,7 +3,7 @@ azure = require("azure")
 async = require("async")
 Promise = require("bluebird")
 DidLastRetry = require("./observers/didLastRetry")
-DeadLetterQueue = require("./observers/deadLetterSucceeded")
+DeadLetterSucceeded = require("./observers/deadLetterSucceeded")
 
 module.exports =
 
@@ -38,7 +38,7 @@ class NotificationsReader
   _setObservers: =>
     @observers = []
     if @_hasCompleteHealthConfig()
-      @observers = @observers.concat [ DidLastRetry, DeadLetterQueue ].map (Observer) => new Observer @config.health.redis
+      @observers = @observers.concat [ DidLastRetry, DeadLetterSucceeded ].map (Observer) => new Observer @config.health.redis
 
   isReadingFromDeadLetter: => @config.deadLetter
 

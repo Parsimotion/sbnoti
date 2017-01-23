@@ -1,3 +1,4 @@
+_ = require("lodash")
 RedisObserver = require("./redisObserver")
 
 module.exports =
