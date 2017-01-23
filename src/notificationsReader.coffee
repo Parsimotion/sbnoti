@@ -44,7 +44,9 @@ class NotificationsReader
 
   #Gets the max delivery count of a topic
     #TODO: AVERIGUAR ESTO
-  getMaxDeliveryCount: => Promise.resolve 10
+  getMaxDeliveryCount: =>
+    (@_doWithTopic "getSubscription")()
+    .then ([subscription]) => subscription?.MaxDeliveryCount or 10
 
   # Starts to receive notifications and calls the given function with every received message.
   # processMessage: (message) -> promise

@@ -16,7 +16,7 @@ module.exports = ->
         constructor: ->
           @refreshSpies()
 
-        _functionsToSpy: -> ["createSubscription","createRule","deleteRule","unlockMessage","deleteMessage","receiveSubscriptionMessage"]
+        _functionsToSpy: -> ["createSubscription","createRule","deleteRule","unlockMessage","deleteMessage","receiveSubscriptionMessage","getSubscription"]
 
         _reduceFunctions: (reducer) =>
           @_functionsToSpy().reduce reducer, {}
