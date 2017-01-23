@@ -155,10 +155,10 @@ describe "NotificationsReader", ->
                 .called.should.eql false
           }, aReader
 
-        it "should publish if it runs successfully", ->
+        it.only "should publish if it runs successfully", ->
           aReader = reader _.merge { }, healthConfig, deadLetter:true
           assertAfterProcess {
-            message: retryableMessage
+            message
             process: Promise.resolve
             assertion: ->
               process.nextTick =>

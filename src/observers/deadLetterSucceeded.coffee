@@ -5,6 +5,8 @@ module.exports =
 
     success: (notification, reader) =>
       if reader.isReadingFromDeadLetter()
-        _.assign notification,
-          subscription: notification.subscription.replace reader.deadLetterSuffix, ''
-        @publish notification, success: true
+        notificationCopy = _(_.clone notification)
+        .update "subscription", (oldValue) => oldValue.replace reader.deadLetterSuffix, ''
+        .value()
+
+        @publish notificationCopy, success: true
