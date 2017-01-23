@@ -92,6 +92,8 @@ describe "NotificationsReader", ->
       it "when fully configured, should add health observers", ->
         redis = healthConfig.health.redis
         reader(healthConfig).observers.should.eql [ new DidLastRetry(redis), new DeadLetterSucceeded(redis)]
+      it "when not fully configured, should not add health observers", ->
+        reader().observers.should.eql [ ]
 
 
 assertAfterProcess = ({ message, process, assertion }, aReader = reader()) ->
