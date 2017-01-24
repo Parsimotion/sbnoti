@@ -29,3 +29,22 @@ reader.run (message) =>
   # or...
   Promise.reject "error processing the message"
 ```
+
+Or also with new builder:
+```coffee-script
+
+reader = new NotificationsReaderBuilder()
+.withServiceBus
+  connectionString: "the azure connection string"
+  topic: "the topic name"
+  subscription: "the subscription name"
+.withFilters [
+    { name: "theNameOfTheCustomFilter", expression: "created = True" }
+  ]
+  # more optional (the values are the defaults):
+.withLogging()
+.fromDeadLetter()
+.withConcurrency 25
+...
+```
+
