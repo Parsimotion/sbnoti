@@ -1,4 +1,5 @@
 mockAzure = require("../test/helpers/mockedAzure")
+ObserverStub =require("../test/helpers/observerStub")
 _ = require("lodash")
 should = require("should")
 Promise = require("bluebird")
@@ -9,6 +10,8 @@ reader = (config = basicConfig) =>
   new NotificationsReaderBuilder()
   .withConfig config
   .build()
+
+{ observer, readerWithStubbedObserver } = {}
 
 describe "NotificationsReader", ->
 
@@ -83,8 +86,31 @@ describe "NotificationsReader", ->
       }, reader deadLetterConfig
 
     describe "Observers", ->
-      it "should emit success event on success"
-      it "should emit error event on error"
+      beforeEach ->
+        observer = new ObserverStub()
+        readerWithStubbedObserver = do ->
+          new NotificationsReaderBuilder()
+          .withConfig basicConfig
+          .withObservers observer
+          .build()
+
+      it "should notify success to observers on message success", (done)->
+        assertAfterProcess done, {
+          message
+          process: Promise.resolve
+          assertion: ->
+            observer.success.calledOnce.should.eql true
+            observer.error.notCalled.should.eql true
+        }, readerWithStubbedObserver
+
+      it "should notify error to observers on message error", (done)->
+        assertAfterProcess done, {
+          message
+          process: Promise.reject
+          assertion: ->
+            observer.error.calledOnce.should.eql true
+            observer.success.notCalled.should.eql true
+        }, readerWithStubbedObserver
 
 assertAfterProcess = (done, { message, process, assertion }, aReader = reader()) ->
   aReader._buildQueueWith process

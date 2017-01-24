@@ -37,7 +37,7 @@ class NotificationsReaderBuilder
     @_validateRedisConfig redis
     @withObservers [ DidLastRetry, DeadLetterSucceeded ].map (Observer) => new Observer redis
   withObservers: (observers) =>
-    @_assignAndReturnSelf { observers }
+    @_assignAndReturnSelf observers: _.castArray observers
   withServiceBus: (serviceBusConfig) =>
     @_assignAndReturnSelf serviceBusConfig
   withFilters: (filters) =>
