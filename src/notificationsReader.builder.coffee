@@ -31,7 +31,7 @@ class NotificationsReaderBuilder
     _.assign reader, observers: @config.observers or []
 
 
-  withConfig: (config) => #Manual config for testing purposes
+  withConfig: (config) => #Manual config, nice for testing purposes
     @_assignAndReturnSelf config
   withHealth: (redis) =>
     @_validateRedisConfig redis
