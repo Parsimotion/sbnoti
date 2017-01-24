@@ -22,6 +22,9 @@ retryableMessage = _(_.clone(message))
         DeliveryCount: 1
   .value()
 
+notification =_.omit _.merge {}, basicConfig, { message }, "connectionString"
+retryableNotification =_.merge {}, notification,{ message: retryableMessage }
+
 module.exports = {
   basicConfig
   deadLetterConfig
@@ -29,4 +32,6 @@ module.exports = {
   message
   retryableMessage
   redis
+  notification
+  retryableNotification
 }
