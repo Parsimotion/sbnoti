@@ -42,14 +42,13 @@ class NotificationsReader
 
   isReadingFromDeadLetter: => @config.deadLetter
 
-  #Gets the max delivery count of a topic
-    #TODO: AVERIGUAR ESTO
+  #Gets the max delivery count of a subscription
   getMaxDeliveryCount: =>
     (@_doWithTopic "getSubscription")()
     .then ([subscription]) => subscription?.MaxDeliveryCount or 10
 
   # Starts to receive notifications and calls the given function with every received message.
-  # processMessage: (message) -> promise
+  # processMessage: (parsedMessageBody, message) -> promise
   run: (processMessage) =>
     $subscription = if @isReadingFromDeadLetter() then Promise.resolve() else @_createSubscription()
 
@@ -65,7 +64,7 @@ class NotificationsReader
     , @config.concurrency * 2
 
     @toProcess = async.queue (message, callback) =>
-      response = try processMessage @_buildMessage(message)
+      response = try processMessage @_buildMessage(message), message
       _cleanInterval = -> clearInterval message.interval
 
       if not response?.then?
