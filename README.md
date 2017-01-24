@@ -46,5 +46,6 @@ reader = new NotificationsReaderBuilder()
 .fromDeadLetter()
 .withConcurrency 25
 ...
+.build()
 ```
 
