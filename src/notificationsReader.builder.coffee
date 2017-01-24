@@ -65,4 +65,4 @@ class NotificationsReaderBuilder
     allRequired = @config.topic? and @config.subscription? and @config.connectionString?
     if not _.isEmpty @config.observers
       allRequired = allRequired and @config.app?
-    throw new Error "Provide at least topic, subscription and a service bus connectionString" unless allRequired
+    throw new Error "Provide at least topic, subscription and a service bus connectionString. Also app if using health." unless allRequired
