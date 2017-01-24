@@ -3,7 +3,7 @@ Promise = require("bluebird")
 _ = require("lodash")
 sinon = require("sinon")
 
-module.exports = ->
+module.exports = _.once ->
   class MockRedisClient
     constructor: ->
       @refreshSpies()

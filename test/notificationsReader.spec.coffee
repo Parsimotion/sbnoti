@@ -1,13 +1,14 @@
-require("../test/helpers/mockedRedis")()
-mockAzure = require("../test/helpers/mockedAzure")()
-{ retryableMessage, basicConfig, deadLetterConfig, filtersConfig, message, healthConfig } = require("../test/helpers/fixture")
-DidLastRetry = require("../src/observers/didLastRetry")
-DeadLetterSucceeded = require("../src/observers/deadLetterSucceeded")
-should = require("should")
-NotificationsReader = require("../src/notificationsReader")
-Promise = require("bluebird")
+mockAzure = require("../test/helpers/mockedAzure")
 _ = require("lodash")
-reader = (config = basicConfig) => new NotificationsReader config
+should = require("should")
+Promise = require("bluebird")
+NotificationsReaderBuilder = require("../src/notificationsReader.builder")
+{ retryableMessage, redis, basicConfig, deadLetterConfig, filtersConfig, message } = require("../test/helpers/fixture")
+
+reader = (config = basicConfig) =>
+  new NotificationsReaderBuilder()
+  .withConfig config
+  .build()
 
 describe "NotificationsReader", ->
 
@@ -20,17 +21,13 @@ describe "NotificationsReader", ->
       reader().config.should.eql
         app: "una-app"
         subscription: "una-subscription"
+        connectionString: "un-connection-string"
         topic: "un-topic"
         concurrency: 25,
         deadLetter: false,
         log: false,
         receiveBatchSize: 5,
         waitForMessageTime: 3000
-        health: redis: {}
-
-    it "should subscribe to dead letter", ->
-      reader(deadLetterConfig).config.subscription
-      .should.eql "una-subscription/$DeadLetterQueue"
 
     it "should create a subscription", ->
       reader()._createSubscription()
@@ -64,10 +61,6 @@ describe "NotificationsReader", ->
           mockAzure.spies.deleteMessage
           .withArgs message
           .calledOnce.should.eql true
-
-          mockAzure.spies.unlockMessage
-          .withArgs message
-          .called.should.eql false
       }
 
     it "should unlock message if it finishes with errors when it isn't dead letter", (done) ->
@@ -89,79 +82,9 @@ describe "NotificationsReader", ->
           .called.should.eql false
       }, reader deadLetterConfig
 
-    describe "Health observers", ->
-
-      it "when fully configured, should add health observers", ->
-        redis = healthConfig.health.redis
-        aReader = reader(healthConfig)
-        aReader.observers.forEach (observer) =>
-          (observer instanceof DidLastRetry or
-          observer instanceof DeadLetterSucceeded)
-          .should.eql true
-
-      it "when not fully configured, should not add health observers", ->
-        reader().observers.should.eql [ ]
-
-      describe "Did Last Retry observer", ->
-
-        it "should publish on error if last retry", (done) ->
-          aReader = reader healthConfig
-          assertAfterProcess done, {
-            message
-            process: Promise.reject
-            assertion: ->
-              _(aReader.observers).find (it) => it instanceof DidLastRetry
-              .redis.spies.publishAsync
-              .withArgs "health-message/una-app/123/un-topic/una-subscription/456", JSON.stringify {"success":false,"error":{"un":"json","CompanyId":123,"ResourceId":456}}
-              .callCount.should.eql 1
-          }, aReader
-
-        it "should not publish on error if it is not the last retry", (done) ->
-          aReader = reader healthConfig
-          assertAfterProcess done, {
-            message: retryableMessage
-            process: Promise.reject
-            assertion: ->
-              _(aReader.observers).find (it) => it instanceof DidLastRetry
-              .redis.spies.publishAsync
-              .called.should.eql false
-          }, aReader
-
-        it "should not publish if it runs successfully", (done) ->
-          aReader = reader healthConfig
-          assertAfterProcess done, {
-            message: retryableMessage
-            process: Promise.resolve
-            assertion: ->
-              _(aReader.observers).find (it) => it instanceof DidLastRetry
-              .redis.spies.publishAsync
-              .called.should.eql false
-          }, aReader
-
-      describe "Dead Letter Succeeded observer", ->
-
-        it "should not publish if it runs with error", (done) ->
-          aReader = reader _.merge { }, healthConfig, deadLetter:true
-          assertAfterProcess done, {
-            message: retryableMessage
-            process: Promise.reject
-            assertion: ->
-              _(aReader.observers).find (it) => it instanceof DeadLetterSucceeded
-              .redis.spies.publishAsync
-              .called.should.eql false
-          }, aReader
-
-        it "should publish if it runs successfully", (done) ->
-          aReader = reader _.merge { }, healthConfig, deadLetter:true
-          assertAfterProcess done, {
-            message
-            process: Promise.resolve
-            assertion: ->
-              _(aReader.observers).find (it) => it instanceof DeadLetterSucceeded
-              .redis.spies.publishAsync
-              .withArgs "health-message/una-app/123/un-topic/una-subscription/456", JSON.stringify success:true
-              .callCount.should.eql 1
-          }, aReader
+    describe "Observers", ->
+      it "should emit success event on success"
+      it "should emit error event on error"
 
 assertAfterProcess = (done, { message, process, assertion }, aReader = reader()) ->
   aReader._buildQueueWith process

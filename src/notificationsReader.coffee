@@ -2,43 +2,15 @@ _ = require("lodash")
 azure = require("azure")
 async = require("async")
 Promise = require("bluebird")
-DidLastRetry = require("./observers/didLastRetry")
-DeadLetterSucceeded = require("./observers/deadLetterSucceeded")
 
+DEAD_LETTER_SUFFIX = "/$DeadLetterQueue"
 module.exports =
 
 # Notifications reader from Azure Service Bus.
 # config = See README
 class NotificationsReader
+
   constructor: (@config) ->
-    @serviceBusService = Promise.promisifyAll(
-      azure.createServiceBusService @config.connectionString
-    )
-    _.defaults @config,
-      concurrency: 25
-      waitForMessageTime: 3000
-      receiveBatchSize: 5
-      log: false
-      deadLetter: false
-      health:
-        redis: {}
-
-    if @isReadingFromDeadLetter()
-      @config.subscription += @deadLetterSuffix
-    @_setObservers()
-
-  deadLetterSuffix: "/$DeadLetterQueue"
-
-  _hasCompleteHealthConfig: =>
-    health = @config.health
-    redis = health?.redis
-    health and redis.host? and redis.port? and redis.auth? and redis.db?
-
-  #Sets observers that will be notified on fail or success of messages
-  _setObservers: =>
-    @observers = []
-    if @_hasCompleteHealthConfig()
-      @observers = @observers.concat [ DidLastRetry, DeadLetterSucceeded ].map (Observer) => new Observer @config.health.redis
 
   isReadingFromDeadLetter: => @config.deadLetter
 
@@ -169,8 +141,9 @@ class NotificationsReader
       .bind @serviceBusService
 
   _doWithTopic: (funcName) =>
+    suffix = if @isReadingFromDeadLetter() then DEAD_LETTER_SUFFIX else ""
     @_do funcName
-      .bind(@serviceBusService, @config.topic, @config.subscription)
+      .bind @serviceBusService, @config.topic, @config.subscription + suffix
 
   _handleError: (error) => @_log error if error?
   _log: (info) =>
