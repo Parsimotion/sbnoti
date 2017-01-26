@@ -6,6 +6,6 @@ module.exports =
     error: (notification, reader, error) =>
       reader.getMaxDeliveryCount()
       .then (maxDeliveryCount) =>
-        if notification.message.brokerProperties.DeliveryCount > maxDeliveryCount
+        if notification.message.brokerProperties.DeliveryCount >= maxDeliveryCount
           @publish notification, { success: false, error }
 
