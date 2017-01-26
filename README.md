@@ -5,35 +5,9 @@ Notifications Reader for Azure Service Bus
 Usage:
 ```coffee-script
 Promise = require("bluebird")
-NotificationsReader = require("sbnoti")
+SBNotiBuilder = require("sbnoti")
 
-reader = new NotificationsReader
-  connectionString: "the azure connection string"
-  topic: "the topic name"
-  subscription: "the subscription name"
-  # optional:
-  filters: [
-    { name: "theNameOfTheCustomFilter", expression: "created = True" }
-  ]
-  # more optional (the values are the defaults):
-  log: false
-  deadLetter: false
-  concurrency: 25
-  receiveBatchSize: 5
-  waitForMessageTime: 3000
-
-reader.run (message) =>
-  # do something with message
-  
-  Promise.resolve "message processed ok"
-  # or...
-  Promise.reject "error processing the message"
-```
-
-Or also with new builder:
-```coffee-script
-
-reader = new NotificationsReaderBuilder()
+reader = new SBNotiBuilder()
 .withServiceBus
   connectionString: "the azure connection string"
   topic: "the topic name"
@@ -47,5 +21,17 @@ reader = new NotificationsReaderBuilder()
 .withConcurrency 25
 ...
 .build()
+
+reader.run (message) =>
+  # do something with message
+  
+  Promise.resolve "message processed ok"
+  # or...
+  Promise.reject "error processing the message"
+```
+
+Or also with new builder:
+```coffee-script
+
 ```
 
