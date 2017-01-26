@@ -8,18 +8,25 @@ Promise = require("bluebird")
 SBNotiBuilder = require("sbnoti")
 
 reader = new SBNotiBuilder()
-.withServiceBus
+.withServiceBus #required
   connectionString: "the azure connection string"
   topic: "the topic name"
   subscription: "the subscription name"
-.withFilters [
+#All settigns below are optional. The values are the defaults.
+.withFilters [ 
     { name: "theNameOfTheCustomFilter", expression: "created = True" }
   ]
-  # more optional (the values are the defaults):
-.withLogging()
-.fromDeadLetter()
+.withLogging true # or simply .withLogging()
+.fromDeadLetter true # or simply .fromDeadLetter()
 .withConcurrency 25
-...
+.withReceiveBatchSize 5
+.withWaitForMessageTime 3000
+# new health notifiying option:
+.withHealth
+  host: "redis.host.com"
+  port: 6739
+  db: 3
+  auth: "yourAuthToken"
 .build()
 
 reader.run (message) =>
@@ -29,9 +36,3 @@ reader.run (message) =>
   # or...
   Promise.reject "error processing the message"
 ```
-
-Or also with new builder:
-```coffee-script
-
-```
-
