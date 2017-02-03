@@ -5,22 +5,29 @@ Notifications Reader for Azure Service Bus
 Usage:
 ```coffee-script
 Promise = require("bluebird")
-NotificationsReader = require("sbnoti")
+SBNotiBuilder = require("sbnoti")
 
-reader = new NotificationsReader
+reader = new SBNotiBuilder()
+.withServiceBus #required
   connectionString: "the azure connection string"
   topic: "the topic name"
   subscription: "the subscription name"
-  # optional:
-  filters: [
+#All settigns below are optional. The values are the defaults.
+.withFilters [ 
     { name: "theNameOfTheCustomFilter", expression: "created = True" }
   ]
-  # more optional (the values are the defaults):
-  log: false
-  deadLetter: false
-  concurrency: 25
-  receiveBatchSize: 5
-  waitForMessageTime: 3000
+.withLogging true # or simply .withLogging()
+.fromDeadLetter true # or simply .fromDeadLetter()
+.withConcurrency 25
+.withReceiveBatchSize 5
+.withWaitForMessageTime 3000
+# new health notifiying option:
+.withHealth
+  host: "redis.host.com"
+  port: 6739
+  db: 3
+  auth: "yourAuthToken"
+.build()
 
 reader.run (message) =>
   # do something with message

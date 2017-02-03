@@ -1,2 +1,2 @@
 require("coffee-script/register")
-module.exports = require("./notificationsReader");
+module.exports = require("./notificationsReader.builder");

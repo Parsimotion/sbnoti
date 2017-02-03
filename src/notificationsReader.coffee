@@ -1,31 +1,28 @@
-azure = require("azure")
-Promise = require("bluebird")
-async = require("async")
 _ = require("lodash")
+azure = require("azure")
+async = require("async")
+Promise = require("bluebird")
+
+DEAD_LETTER_SUFFIX = "/$DeadLetterQueue"
 module.exports =
 
 # Notifications reader from Azure Service Bus.
 # config = See README
 class NotificationsReader
+
   constructor: (@config) ->
-    @serviceBusService = Promise.promisifyAll(
-      azure.createServiceBusService @config.connectionString
-    )
 
-    _.defaults @config,
-      concurrency: 25
-      waitForMessageTime: 3000
-      receiveBatchSize: 5
-      log: false
-      deadLetter: false
+  isReadingFromDeadLetter: => @config.deadLetter
 
-    if @config.deadLetter
-      @config.subscription += "/$DeadLetterQueue"
+  #Gets the max delivery count of a subscription
+  getMaxDeliveryCount: =>
+    (@_doWithTopic "getSubscription")()
+    .then ([subscription]) => subscription?.MaxDeliveryCount or 10
 
   # Starts to receive notifications and calls the given function with every received message.
-  # processMessage: (message) -> promise
+  # processMessage: (parsedMessageBody, message) -> promise
   run: (processMessage) =>
-    $subscription = if @config.deadLetter then Promise.resolve() else @_createSubscription()
+    $subscription = if @isReadingFromDeadLetter() then Promise.resolve() else @_createSubscription()
 
     $subscription.then =>
       @_log "Listening for messages..."
@@ -105,15 +102,25 @@ class NotificationsReader
 
     onError = (error) =>
       @_log "--> Error processing message: #{error}. #{messageId}"
-      (@_do "unlockMessage") lockedMessage unless @config.deadLetter
+      @_notifyError lockedMessage, error
+      (@_do "unlockMessage") lockedMessage unless @isReadingFromDeadLetter()
 
     @toProcess.push lockedMessage, (err) =>
       return onError(err) if err?
+      @_notifySuccess lockedMessage
       (@_do "deleteMessage") lockedMessage
         .then =>
           @_log "--> Message #{messageId} processed OK."
         .catch (error) =>
           @_log "--> Error deleting message: #{error}. #{messageId}"
+
+  _notifyError: (message, error) => @_notify message, 'error', error
+
+  _notifySuccess: (message) => @_notify message, 'success'
+
+  _notify: (message, event, opts) =>
+    notification = _.merge { message }, _.pick @config, ["app","topic","subscription"]
+    @observers.forEach (observer) => observer[event] notification, @, opts
 
   _buildMessage: (message) ->
     clean = (body) =>
@@ -134,8 +141,9 @@ class NotificationsReader
       .bind @serviceBusService
 
   _doWithTopic: (funcName) =>
+    suffix = if @isReadingFromDeadLetter() then DEAD_LETTER_SUFFIX else ""
     @_do funcName
-      .bind(@serviceBusService, @config.topic, @config.subscription)
+      .bind @serviceBusService, @config.topic, @config.subscription + suffix
 
   _handleError: (error) => @_log error if error?
   _log: (info) =>
