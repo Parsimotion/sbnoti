@@ -31,6 +31,13 @@ describe "NotificationsReaderBuilder", ->
       log: false,
       deadLetter: false
 
+  it "should build a notification reader deadLetter", ->
+    sbnotis = builder
+    .withServiceBus basicConfig
+    .fromDeadLetter()
+    .build()._sbnotis
+
+    onlyOne sbnotis, deadLetter: true
 
   describe "When health is requested", ->
 

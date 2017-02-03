@@ -9,7 +9,7 @@ NotificationsReaderBuilder = require("../src/notificationsReader.builder")
 deadLetterReader = (config = basicConfig) => 
   new NotificationsReaderBuilder()
   .withConfig config
-  .activeFor failed: true
+  .fromDeadLetter()
   .build()._sbnotis[0]
 
 reader = (config = basicConfig) =>
