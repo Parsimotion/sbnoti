@@ -53,21 +53,28 @@ describe "NotificationsReaderBuilder", ->
       .withServiceBus basicConfig
       .withHealth.should.throw()
 
-  describe "When it should process both regular and dead letter messages", ->
+  describe "Process both regular and dead letter messages", ->
+    describe "when it should process both", ->
+      it "should build reader with two sbnotis", ->
+        builder
+        .withServiceBus basicConfig
+        .alsoProcessDeadLetter()
+        .build()
+        .sbnotis.map ({config: {deadLetter}}) -> { deadLetter }
+        .should.match [{deadLetter: false}, {deadLetter: true}]
 
-    it "should build reader with two sbnotis", ->
-      builder
-      .withServiceBus basicConfig
-      .alsoProcessDeadLetter()
-      .build()
-      .sbnotis.map ({config: {deadLetter}}) -> { deadLetter }
-      .should.match [{deadLetter: false}, {deadLetter: true}]
+      it "should build reader with two sbnotis regardless of deadLetter property", ->
+        builder
+        .withServiceBus basicConfig
+        .alsoProcessDeadLetter()
+        .fromDeadLetter()
+        .build()
+        .sbnotis.map ({config: {deadLetter}}) -> { deadLetter }
+        .should.match [{deadLetter: true}, {deadLetter: false}]
 
-    it "should build reader with two sbnotis regardless of deadLetter property", ->
-      builder
-      .withServiceBus basicConfig
-      .alsoProcessDeadLetter()
-      .fromDeadLetter()
-      .build()
-      .sbnotis.map ({config: {deadLetter}}) -> { deadLetter }
-      .should.match [{deadLetter: true}, {deadLetter: false}]
+    describe "when it should not process both", ->
+      it "should build reader with only one sbnoti", ->
+        builder
+        .withServiceBus basicConfig
+        .build()
+        .sbnotis.should.have.length 1
