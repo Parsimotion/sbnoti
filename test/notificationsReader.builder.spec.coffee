@@ -78,6 +78,36 @@ describe "NotificationsReaderBuilder", ->
       ._getSbnotis()
       onlyOne sbnotis, deadLetter: true
 
+    it "should build reader withouts sbnotis if nothing is passed", ->
+      sbnotis = builder
+      .activeFor()
+      ._getSbnotis()
+      sbnotis.should.have.length 0
+
+    it "should build reader withouts sbnotis if options are false", ->
+      sbnotis = builder
+      .activeFor
+        failed: false
+        pending: false
+      ._getSbnotis()
+      sbnotis.should.have.length 0
+
+    it "should build one regular reader ", ->
+      sbnotis = builder
+      .activeFor
+        pending: true
+        failed: false
+      ._getSbnotis()
+      onlyOne sbnotis, deadLetter: false 
+
+    it "should build one deadletter reader", ->
+      sbnotis = builder
+      .activeFor
+        pending: false
+        failed: true
+      ._getSbnotis()
+      onlyOne sbnotis, deadLetter: true
+
   describe "Without explicit activeFor call", ->
     it "should default to one regular sbnoti", ->
       sbnotis = builder._getSbnotis()

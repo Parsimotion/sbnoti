@@ -41,7 +41,7 @@ class NotificationsReaderBuilder
     @_validateRequired()
     @_getReader()
 
-  activeFor: (@activeReaders) => @
+  activeFor: (@activeReaders = {}) => @
 
   withConfig: (config) => #Manual config, nice for testing purposes
     @_assignAndReturnSelf config
