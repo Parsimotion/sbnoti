@@ -27,13 +27,15 @@ class NotificationsReaderBuilder
       log: false
       deadLetter: false
 
-  _getReader: =>
+  _getReader: => new Reader @_getSbnotis()
+
+  _getSbnotis: =>
     sbnotis = [@_getSbnoti(deadLetter: @config.deadLetter)]
     sbnotis.push @_getSbnoti deadLetter: !@config.deadLetter if @shouldProcessDeadLetter
-    new Reader sbnotis
-
-  _getSbnoti: ({ deadLetter } = {}) =>
-    reader = new NotificationsReader _.merge {}, @config, { deadLetter }
+    sbnotis
+    
+  _getSbnoti: (config) =>
+    reader = new NotificationsReader _.merge {}, @config, config
     _.assign reader, serviceBusService: Promise.promisifyAll(
       azure.createServiceBusService @config.connectionString
     )
