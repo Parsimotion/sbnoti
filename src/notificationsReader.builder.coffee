@@ -33,7 +33,7 @@ class NotificationsReaderBuilder
     sbnotis = [@_getSbnoti(deadLetter: @config.deadLetter)]
     sbnotis.push @_getSbnoti deadLetter: !@config.deadLetter if @shouldProcessDeadLetter
     sbnotis
-    
+
   _getSbnoti: (config) =>
     reader = new NotificationsReader _.merge {}, @config, config
     _.assign reader, serviceBusService: Promise.promisifyAll(
@@ -46,7 +46,7 @@ class NotificationsReaderBuilder
     @_getReader()
 
   #if processDeadLetter is true, the run callback is executed for normal and deadletter messages
-  alsoProcessDeadLetter: (@shouldProcessDeadLetter = true) =>
+  alsoProcessDeadLetter: (@shouldProcessDeadLetter = true) => @
 
   withConfig: (config) => #Manual config, nice for testing purposes
     @_assignAndReturnSelf config

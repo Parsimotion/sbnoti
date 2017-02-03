@@ -52,3 +52,13 @@ describe "NotificationsReaderBuilder", ->
       builder
       .withServiceBus basicConfig
       .withHealth.should.throw()
+
+  describe "When it should process both regular and dead letter messages", ->
+
+    it "should build reader with two sbnotis", ->
+      builder
+      .withServiceBus basicConfig
+      .alsoProcessDeadLetter()
+      .build()
+      .sbnotis.map ({config: {deadLetter}}) -> { deadLetter }
+      .should.match [{deadLetter: false}, {deadLetter: true}]
