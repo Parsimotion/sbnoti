@@ -5,12 +5,7 @@ Promise = require("bluebird")
 DidLastRetry = require("./observers/didLastRetry")
 DeadLetterSucceeded = require("./observers/deadLetterSucceeded")
 NotificationsReader = require("./notificationsReader")
-
-class Reader
-  constructor: (@_sbnotis) ->
-
-  run: (process) =>
-    @_sbnotis.forEach (sbnoti) => sbnoti.run process
+CompositeReader = require("./compositeReader")
 
 module.exports =
 
@@ -27,7 +22,7 @@ class NotificationsReaderBuilder
       log: false
       deadLetter: false
 
-  _getReader: => new Reader @_getSbnotis()
+  _getReader: => new CompositeReader @_getSbnotis()
 
   _getSbnotis: =>
     sbnotis = [@_getSbnoti(deadLetter: @config.deadLetter)]
