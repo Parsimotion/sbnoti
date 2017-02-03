@@ -53,33 +53,38 @@ describe "NotificationsReaderBuilder", ->
       .withServiceBus basicConfig
       .withHealth.should.throw()
 
-    describe "With explicit activeFor call", ->
-      it "should build reader with two sbnotis", ->
-        sbnotis = builder
-        .activeFor
-          pending: true
-          failed: true
-        ._getSbnotis()
-        sbnotis.should.have.length 2
-        readsFromDeadLetter(sbnotis[0]).should.eql false
-        readsFromDeadLetter(sbnotis[1]).should.eql true
+  describe "With explicit activeFor call", ->
+    it "should build reader with two sbnotis", ->
+      sbnotis = builder
+      .activeFor
+        pending: true
+        failed: true
+      ._getSbnotis()
+      sbnotis.should.have.length 2
+      readsFromDeadLetter(sbnotis[0]).should.eql false
+      readsFromDeadLetter(sbnotis[1]).should.eql true
 
-      it "should build reader with only a regular sbnoti", ->
-        sbnotis = builder
-        .activeFor
-          pending: true
-        ._getSbnotis()
-        sbnotis.should.have.length 1
-        readsFromDeadLetter(sbnotis[0]).should.eql false
+    it "should build reader with only a regular sbnoti", ->
+      sbnotis = builder
+      .activeFor
+        pending: true
+      ._getSbnotis()
+      onlyOne sbnotis, deadLetter: false 
 
-    
-    describe "Without explicit activeFor call", ->
-      it "should default to one regular sbnoti", ->
-        sbnotis = builder._getSbnotis()
-        sbnotis.should.have.length 1
-        readsFromDeadLetter(sbnotis[0]).should.eql false
+    it "should build reader with only a deadLetter sbnoti", ->
+      sbnotis = builder
+      .activeFor
+        failed: true
+      ._getSbnotis()
+      onlyOne sbnotis, deadLetter: true
 
-onlyOne = (sbnotis, {deadLetter}) -> 
-        sbnotis.should.have.length 1
-        readsFromDeadLetter(sbnotis[0]).should.eql deadLetter
+  describe "Without explicit activeFor call", ->
+    it "should default to one regular sbnoti", ->
+      sbnotis = builder._getSbnotis()
+      onlyOne sbnotis, deadLetter: false
+
+onlyOne = (sbnotis, { deadLetter }) -> 
+  sbnotis.should.have.length 1
+  readsFromDeadLetter(sbnotis[0]).should.eql deadLetter
+
 readsFromDeadLetter = (sbnoti) -> sbnoti.config.deadLetter
