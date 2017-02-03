@@ -14,23 +14,24 @@ module.exports =
 class NotificationsReaderBuilder
 
   constructor: -> 
-    @shouldProcessDeadLetter = false
     @config =   
       concurrency: 25
       waitForMessageTime: 3000
       receiveBatchSize: 5
       log: false
-      deadLetter: false
+    @activeReaders = pending: true
 
   _getReader: => new CompositeReader @_getSbnotis()
 
   _getSbnotis: =>
-    sbnotis = [@_getSbnoti(deadLetter: @config.deadLetter)]
-    sbnotis.push @_getSbnoti deadLetter: !@config.deadLetter if @shouldProcessDeadLetter
-    sbnotis
+    sbnotis = []
+    { pending, failed } = @activeReaders
+    sbnotis.push false if pending
+    sbnotis.push true if failed
+    sbnotis.map @_getSbnoti
 
-  _getSbnoti: (config) =>
-    reader = new NotificationsReader _.merge {}, @config, config
+  _getSbnoti: (deadLetter) =>
+    reader = new NotificationsReader _.merge {}, @config, { deadLetter }
     _.assign reader, serviceBusService: Promise.promisifyAll(
       azure.createServiceBusService @config.connectionString
     )
@@ -40,8 +41,7 @@ class NotificationsReaderBuilder
     @_validateRequired()
     @_getReader()
 
-  #if processDeadLetter is true, the run callback is executed for normal and deadletter messages
-  alsoProcessDeadLetter: (@shouldProcessDeadLetter = true) => @
+  activeFor: (@activeReaders) => @
 
   withConfig: (config) => #Manual config, nice for testing purposes
     @_assignAndReturnSelf config
@@ -56,8 +56,7 @@ class NotificationsReaderBuilder
     @_assignAndReturnSelf { filters }
   withLogging: (log = true) =>
     @_assignAndReturnSelf { log }
-  fromDeadLetter: (deadLetter = true) =>
-    @_assignAndReturnSelf { deadLetter }
+  fromDeadLetter: => @activeFor failed: true
   withConcurrency: (concurrency) =>
     @_assignAndReturnSelf { concurrency }
   withReceiveBatchSize: (receiveBatchSize) =>

@@ -6,6 +6,12 @@ Promise = require("bluebird")
 NotificationsReaderBuilder = require("../src/notificationsReader.builder")
 { retryableMessage, redis, basicConfig, deadLetterConfig, filtersConfig, message } = require("../test/helpers/fixture")
 
+deadLetterReader = (config = basicConfig) => 
+  new NotificationsReaderBuilder()
+  .withConfig config
+  .activeFor failed: true
+  .build()._sbnotis[0]
+
 reader = (config = basicConfig) =>
   new NotificationsReaderBuilder()
   .withConfig config
@@ -81,9 +87,10 @@ describe "NotificationsReader", ->
         message
         process: Promise.reject
         assertion: ->
+          
           mockAzure.spies.unlockMessage
           .called.should.eql false
-      }, reader deadLetterConfig
+      }, deadLetterReader()
 
     describe "Observers", ->
       beforeEach ->
