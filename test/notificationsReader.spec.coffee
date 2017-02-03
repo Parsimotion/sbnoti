@@ -9,7 +9,7 @@ NotificationsReaderBuilder = require("../src/notificationsReader.builder")
 reader = (config = basicConfig) =>
   new NotificationsReaderBuilder()
   .withConfig config
-  .build().sbnotis[0]
+  .build()._sbnotis[0]
 
 { observer, readerWithStubbedObserver } = {}
 
@@ -92,7 +92,7 @@ describe "NotificationsReader", ->
           new NotificationsReaderBuilder()
           .withConfig basicConfig
           .withObservers observer
-          .build().sbnotis[0]
+          .build()._sbnotis[0]
 
       it "should notify success to observers on message success", (done)->
         assertAfterProcess done, {

@@ -19,7 +19,7 @@ describe "NotificationsReaderBuilder", ->
   it "should build a notification reader with proper config", ->
     builder
     .withServiceBus basicConfig
-    .build().sbnotis[0]
+    .build()._sbnotis[0]
     .config.should.eql
       subscription: 'una-subscription',
       topic: 'un-topic',
@@ -42,7 +42,7 @@ describe "NotificationsReaderBuilder", ->
         port: 6739
         auth: "asdf"
         db: 2
-      .build().sbnotis[0]
+      .build()._sbnotis[0]
       .observers.forEach (observer) =>
         (observer instanceof DidLastRetry or
         observer instanceof DeadLetterSucceeded)

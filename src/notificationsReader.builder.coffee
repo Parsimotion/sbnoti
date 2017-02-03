@@ -7,10 +7,10 @@ DeadLetterSucceeded = require("./observers/deadLetterSucceeded")
 NotificationsReader = require("./notificationsReader")
 
 class Reader
-  constructor: (@sbnotis) ->
+  constructor: (@_sbnotis) ->
 
   run: (process) =>
-    @sbnotis.forEach (sbnoti) => sbnoti.run process
+    @_sbnotis.forEach (sbnoti) => sbnoti.run process
 
 module.exports =
 
