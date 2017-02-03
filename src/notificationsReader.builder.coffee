@@ -6,30 +6,45 @@ DidLastRetry = require("./observers/didLastRetry")
 DeadLetterSucceeded = require("./observers/deadLetterSucceeded")
 NotificationsReader = require("./notificationsReader")
 
+class Reader
+  constructor: (@sbnotis) ->
+
+  run: (process) =>
+    @sbnotis.forEach (sbnoti) => sbnoti.run process
+
 module.exports =
 
 # Notifications reader from Azure Service Bus.
 # config = See README
 class NotificationsReaderBuilder
 
-  constructor: -> @config = {}
-
-  build: =>
-    @_validateRequired()
-
-    _.defaults @config,
+  constructor: -> 
+    @shouldProcessDeadLetter = false
+    @config =   
       concurrency: 25
       waitForMessageTime: 3000
       receiveBatchSize: 5
       log: false
       deadLetter: false
 
-    reader = new NotificationsReader @config
+  _getReader: =>
+    sbnotis = [@_getSbnoti(deadLetter: @config.deadLetter)]
+    sbnotis.push @_getSbnoti deadLetter: !@config.deadLetter if @shouldProcessDeadLetter
+    new Reader sbnotis
+
+  _getSbnoti: ({ deadLetter } = {}) =>
+    reader = new NotificationsReader _.merge {}, @config, { deadLetter }
     _.assign reader, serviceBusService: Promise.promisifyAll(
       azure.createServiceBusService @config.connectionString
     )
-    _.assign reader, observers: @config.observers or []
+    _.assign reader, observers: @config.observers or []  
 
+  build: =>
+    @_validateRequired()
+    @_getReader()
+
+  #if processDeadLetter is true, the run callback is executed for normal and deadletter messages
+  alsoProcessDeadLetter: (@shouldProcessDeadLetter = true) =>
 
   withConfig: (config) => #Manual config, nice for testing purposes
     @_assignAndReturnSelf config
