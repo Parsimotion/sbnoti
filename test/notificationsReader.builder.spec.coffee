@@ -53,19 +53,33 @@ describe "NotificationsReaderBuilder", ->
       .withServiceBus basicConfig
       .withHealth.should.throw()
 
-  describe "Process both regular and dead letter messages", ->
-    describe "when it should process both", ->
+    describe "With explicit activeFor call", ->
       it "should build reader with two sbnotis", ->
-        builder
+        sbnotis = builder
         .activeFor
           pending: true
           failed: true
         ._getSbnotis()
-        .map ({config: {deadLetter}}) -> { deadLetter }
-        .should.match [{deadLetter: false}, {deadLetter: true}]
+        sbnotis.should.have.length 2
+        readsFromDeadLetter(sbnotis[0]).should.eql false
+        readsFromDeadLetter(sbnotis[1]).should.eql true
 
-    describe "when it should not process both", ->
-      it "should build reader with only one sbnoti", ->
-        builder
+      it "should build reader with only a regular sbnoti", ->
+        sbnotis = builder
+        .activeFor
+          pending: true
         ._getSbnotis()
-        .should.have.length 1
+        sbnotis.should.have.length 1
+        readsFromDeadLetter(sbnotis[0]).should.eql false
+
+    
+    describe "Without explicit activeFor call", ->
+      it "should default to one regular sbnoti", ->
+        sbnotis = builder._getSbnotis()
+        sbnotis.should.have.length 1
+        readsFromDeadLetter(sbnotis[0]).should.eql false
+
+onlyOne = (sbnotis, {deadLetter}) -> 
+        sbnotis.should.have.length 1
+        readsFromDeadLetter(sbnotis[0]).should.eql deadLetter
+readsFromDeadLetter = (sbnoti) -> sbnoti.config.deadLetter
