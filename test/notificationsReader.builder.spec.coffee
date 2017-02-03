@@ -62,3 +62,12 @@ describe "NotificationsReaderBuilder", ->
       .build()
       .sbnotis.map ({config: {deadLetter}}) -> { deadLetter }
       .should.match [{deadLetter: false}, {deadLetter: true}]
+
+    it "should build reader with two sbnotis regardless of deadLetter property", ->
+      builder
+      .withServiceBus basicConfig
+      .alsoProcessDeadLetter()
+      .fromDeadLetter()
+      .build()
+      .sbnotis.map ({config: {deadLetter}}) -> { deadLetter }
+      .should.match [{deadLetter: true}, {deadLetter: false}]
