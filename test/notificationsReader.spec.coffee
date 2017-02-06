@@ -121,50 +121,36 @@ describe "NotificationsReader", ->
 
     describe "Run and request", ->
       beforeEach ->
-        # Disable net connections
         nock.disableNetConnect()
         nock.enableNetConnect('127.0.0.1')
       
       it "should add default request options", ->
         url = "http://un.endpoint.com"
-        reader()._addDefaultOptions {url}
-        .should.eql { url, json:true }
+        reader()._addDefaultOptions { url }
+        .should.eql { url, json: true }
 
       it "should make a post request", (done) ->
-        uri = "http://un.endpoint.com"
-        aReader = reader()
-        scopeEndpoint = nock uri
-        .post "/", { un: 'json', CompanyId: 123, ResourceId: 456 }
-        .reply 200, todo:'bien'
+        shouldMakeRequest 'post', done
 
-        assertAfterProcess done, {
-          message
-          process:
-            aReader._makeRequestCallback (aMessage) => {
-              uri
-              body: aMessage
-            }
-          assertion: -> scopeEndpoint.isDone().should.eql true
-        }, aReader
-      
       it "should make a put request", (done) ->
-        uri = "http://un.endpoint.com"
-        aReader = reader()
-        scopeEndpoint = nock uri
-        .put "/", { un: 'json', CompanyId: 123, ResourceId: 456 }
-        .reply 200, todo:'bien'
+        shouldMakeRequest 'put', done
 
-        assertAfterProcess done, {
-          message
-          process: do =>
-            aReader._makeRequestCallback (aMessage) => 
-              {uri,body: aMessage}
-            , 'put'
-          assertion: -> scopeEndpoint.isDone().should.eql true
-        }, aReader
+shouldMakeRequest = (method, done) ->
+  uri = "http://un.endpoint.com"
+  aReader = reader()
+  nocked = nock uri
+  scopeEndpoint = 
+    nocked[method] "/", { un: 'json', CompanyId: 123, ResourceId: 456 }
+    .reply 200, todo:'bien'
 
-
-
+  assertAfterProcess done, {
+    message
+    process: do =>
+      aReader._makeRequestCallback (aMessage) => 
+        { uri, body: aMessage }
+      , method
+    assertion: -> scopeEndpoint.isDone().should.eql true
+  }, aReader
 
 assertAfterProcess = (done, { message, process, assertion }, aReader = reader()) ->
   aReader._buildQueueWith process
