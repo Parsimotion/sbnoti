@@ -4,6 +4,7 @@ _ = require("lodash")
 should = require("should")
 Promise = require("bluebird")
 NotificationsReaderBuilder = require("../src/notificationsReader.builder")
+nock = require("nock")
 { retryableMessage, redis, basicConfig, deadLetterConfig, filtersConfig, message } = require("../test/helpers/fixture")
 
 deadLetterReader = (config = basicConfig) => 
@@ -119,11 +120,15 @@ describe "NotificationsReader", ->
         }, readerWithStubbedObserver
 
     describe "Run and request", ->
-      it.only "should make post", ->
-        reader().runAndRequest (message)->
-          headers: jeder: "no se dice jider"
-          body: message
-        .then console.log
+      beforeEach ->
+        # Disable net connections
+        nock.disableNetConnect()
+        nock.enableNetConnect('127.0.0.1')
+      
+      it "should add default request options", ->
+        url = "http://un.endpoint.com"
+        reader()._addDefaultOptions {url}
+        .should.eql { url, json:true }
 
 
 assertAfterProcess = (done, { message, process, assertion }, aReader = reader()) ->
