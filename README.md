@@ -70,3 +70,20 @@ reader.run (message) =>
   # or...
   Promise.reject "error processing the message"
 ```
+
+### To make an http request for each message
+``` Coffeescript
+messageToOptions = (message) =>
+  uri: "http://an.endpoint.com"
+  body: message.data
+  headers:
+    authorization: "access token"
+
+reader.runAndPost messageToOptions
+reader.runAndGet messageToOptions
+reader.runAndPut messageToOptions
+reader.runAndDelete messageToOptions
+#or also
+reader.runAndRequest messageToOptions, 'post' #'get','delete','update'
+
+```
