@@ -145,7 +145,7 @@ shouldMakeRequest = (method, done) ->
 
   assertAfterProcess done, {
     message
-    process: do =>
+    process:
       aReader._makeRequestCallback (aMessage) => 
         { uri, body: aMessage }
       , method
