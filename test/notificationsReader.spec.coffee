@@ -118,6 +118,14 @@ describe "NotificationsReader", ->
             observer.success.notCalled.should.eql true
         }, readerWithStubbedObserver
 
+    describe "Run and request", ->
+      it.only "should make post", ->
+        reader().runAndRequest (message)->
+          headers: jeder: "no se dice jider"
+          body: message
+        .then console.log
+
+
 assertAfterProcess = (done, { message, process, assertion }, aReader = reader()) ->
   aReader._buildQueueWith process
   aReader._process message

@@ -12,7 +12,6 @@ asyncify = (fn) ->
 stub =
   "azure":
     new class AzureMock
-      id: _.once -> Math.random()*1000
       constructor: ->
         @refreshSpies()
 
