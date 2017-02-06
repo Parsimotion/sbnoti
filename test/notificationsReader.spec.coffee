@@ -146,6 +146,25 @@ describe "NotificationsReader", ->
             }
           assertion: -> scopeEndpoint.isDone().should.eql true
         }, aReader
+      
+      it "should make a put request", (done) ->
+        uri = "http://un.endpoint.com"
+        aReader = reader()
+        scopeEndpoint = nock uri
+        .put "/", { un: 'json', CompanyId: 123, ResourceId: 456 }
+        .reply 200, todo:'bien'
+
+        assertAfterProcess done, {
+          message
+          process: do =>
+            aReader._makeRequestCallback (aMessage) => 
+              {uri,body: aMessage}
+            , 'put'
+          assertion: -> scopeEndpoint.isDone().should.eql true
+        }, aReader
+
+
+
 
 assertAfterProcess = (done, { message, process, assertion }, aReader = reader()) ->
   aReader._buildQueueWith process
