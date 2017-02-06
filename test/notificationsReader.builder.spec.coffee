@@ -60,6 +60,7 @@ describe "NotificationsReaderBuilder", ->
       builder
       .withServiceBus basicConfig
       .withHealth.should.throw()
+
     it "should throw if no app is provided", ->
       healthWithoutApp = => 
         builder
@@ -71,6 +72,17 @@ describe "NotificationsReaderBuilder", ->
             auth: "asdf"
             db: 2
       healthWithoutApp.should.throw()
+  
+    it "should throw if redis is incomplete", ->
+      healthWithIncompleteRedis = => 
+        builder
+        .withServiceBus basicConfig
+        .withHealth
+          redis: 
+            host: "host"
+            port: 6739
+      healthWithIncompleteRedis.should.throw()
+  
   describe "With explicit activeFor call", ->
     it "should build reader with two sbnotis", ->
       sbnotis = builder
