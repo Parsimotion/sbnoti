@@ -21,10 +21,12 @@ reader = new SbnotiBuilder()
 .withWaitForMessageTime 3000
 # new health notifiying option:
 .withHealth
-  host: "redis.host.com"
-  port: 6739
-  db: 3
-  auth: "yourAuthToken"
+  redis: 
+    host: "host"
+    port: 6739
+    auth: "cadenaDeAuth"
+    db: 2
+  app: "la-aplicacion-que-esta-usando-sbnoti"
 .build()
 ```
 ### To read from the dead letter subscription
