@@ -13,7 +13,8 @@
     "bluebird": "^2.9.34",
     "coffee-script": "^1.8.0",
     "lodash": "^4.13.1",
-    "redis": "^2.6.5"
+    "redis": "^2.6.5",
+    "request": "^2.79.0"
   },
   "devDependencies": {
     "grunt": "~0.4.4",

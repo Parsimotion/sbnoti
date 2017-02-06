@@ -1,9 +1,10 @@
+
 module.exports =
 class CompositeReader
   constructor: (@_sbnotis) ->
 
   run: (process) =>
-    @_sbnotis.forEach (sbnoti) => sbnoti.run process
+    @_forEachSbnoti (sbnoti) => sbnoti.run process
 
   runAndPost: (messageToOptions) =>
     @runAndRequest messageToOptions, 'post'
@@ -14,4 +15,6 @@ class CompositeReader
   runAndGet: (messageToOptions) =>
     @runAndRequest messageToOptions, 'get'
   runAndRequest: (messageToOptions, method = 'post') =>
-    @_sbnotis.forEach (sbnoti) => sbnoti.runAndRequest messageToOptions, method
+    @_forEachSbnoti (sbnoti) => sbnoti.runAndRequest messageToOptions, method
+
+  _forEachSbnoti: (fn) => @_sbnotis.forEach fn
