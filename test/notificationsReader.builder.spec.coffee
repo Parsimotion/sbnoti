@@ -23,7 +23,6 @@ describe "NotificationsReaderBuilder", ->
     .config.should.eql
       subscription: 'una-subscription',
       topic: 'un-topic',
-      app: 'una-app',
       connectionString: 'un-connection-string',
       concurrency: 25,
       waitForMessageTime: 3000,
@@ -45,10 +44,12 @@ describe "NotificationsReaderBuilder", ->
       builder
       .withServiceBus basicConfig
       .withHealth
-        host: "host"
-        port: 6739
-        auth: "asdf"
-        db: 2
+        redis: 
+          host: "host"
+          port: 6739
+          auth: "asdf"
+          db: 2
+        app: "la-aplicacion-que-esta-usando-sbnoti"
       .build()._sbnotis[0]
       .observers.forEach (observer) =>
         (observer instanceof DidLastRetry or
@@ -59,7 +60,17 @@ describe "NotificationsReaderBuilder", ->
       builder
       .withServiceBus basicConfig
       .withHealth.should.throw()
-
+    it "should throw if no app is provided", ->
+      healthWithoutApp = => 
+        builder
+        .withServiceBus basicConfig
+        .withHealth
+          redis: 
+            host: "host"
+            port: 6739
+            auth: "asdf"
+            db: 2
+      healthWithoutApp.should.throw()
   describe "With explicit activeFor call", ->
     it "should build reader with two sbnotis", ->
       sbnotis = builder

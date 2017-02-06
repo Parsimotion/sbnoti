@@ -45,8 +45,10 @@ class NotificationsReaderBuilder
 
   withConfig: (config) => #Manual config, nice for testing purposes
     @_assignAndReturnSelf config
-  withHealth: (redis) =>
-    @_validateRedisConfig redis
+  withHealth: (config) =>
+    { app, redis } = config
+    @_assignAndReturnSelf { app }
+    @_validateHealthConfig config
     @withObservers [ DidLastRetry, DeadLetterSucceeded ].map (Observer) => new Observer redis
   withObservers: (observers) =>
     @_assignAndReturnSelf observers: _.castArray observers
@@ -68,12 +70,14 @@ class NotificationsReaderBuilder
     _.assign @config, value
     @
 
+  _validateHealthConfig: ({redis, app}) =>
+    @_validateRedisConfig redis
+    throw new Error "Please provide app for health" unless @config.app?
+
   _validateRedisConfig: (redis) =>
     redisIsComplete = redis.host? and redis.port? and redis.auth? and redis.db?
     throw new Error "Redis incomplete. Please provide host, port, auth and db." unless redisIsComplete
 
   _validateRequired: =>
     allRequired = @config.topic? and @config.subscription? and @config.connectionString?
-    if not _.isEmpty @config.observers
-      allRequired = allRequired and @config.app?
-    throw new Error "Provide at least topic, subscription and a service bus connectionString. Also app if using health." unless allRequired
+    throw new Error "Provide at least topic, subscription and a service bus connectionString." unless allRequired

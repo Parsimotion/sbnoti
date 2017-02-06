@@ -1,6 +1,6 @@
 _ = require("lodash")
 
-basicConfig = { subscription: "una-subscription", topic: "un-topic", app: "una-app", connectionString: "un-connection-string" }
+basicConfig = { subscription: "una-subscription", topic: "un-topic", connectionString: "un-connection-string" }
 deadLetterConfig = _.merge deadLetter: true, basicConfig
 filtersConfig = _.merge filters: [{name: "un-filtro", expression: "un_filtro eq 'True'"}], basicConfig
 redis =
@@ -22,7 +22,7 @@ retryableMessage = _(_.clone(message))
         DeliveryCount: 1
   .value()
 
-notification =_.omit _.merge {}, basicConfig, { message }, "connectionString"
+notification =_.omit _.merge {app: 'una-app'}, basicConfig, { message }, "connectionString"
 retryableNotification =_.merge {}, notification,{ message: retryableMessage }
 
 module.exports = {

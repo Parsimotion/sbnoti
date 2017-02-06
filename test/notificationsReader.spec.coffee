@@ -28,7 +28,6 @@ describe "NotificationsReader", ->
 
     it "should have correct defaults", ->
       reader().config.should.eql
-        app: "una-app"
         subscription: "una-subscription"
         connectionString: "un-connection-string"
         topic: "un-topic"
