@@ -22,13 +22,12 @@ class NotificationsReader
   # Starts to receive notifications and makes given http request with every received message.
   runAndRequest: (messageToOptions, method) =>
     @run (parsedMessageBody, message) =>  
-      @_makeRequest messageToOptions, method
+      @_makeRequest messageToOptions(parsedMessageBody, message), method
 
   _addDefaultOptions: (opts) => _.merge json: true, opts
   
-  _makeRequest: (messageToOptions, method = 'post') =>
-    options = @_addDefaultOptions messageToOptions parsedMessageBody, message
-    request["#{method}Async"] options  
+  _makeRequest: (options, method = 'post') =>
+    request["#{method}Async"] @_addDefaultOptions options
 
   # Starts to receive notifications and calls the given function with every received message.
   # processMessage: (parsedMessageBody, message) -> promise
