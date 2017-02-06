@@ -2,7 +2,7 @@ _ = require("lodash")
 azure = require("azure")
 async = require("async")
 Promise = require("bluebird")
-
+request = Promise.promisifyAll require("request")
 DEAD_LETTER_SUFFIX = "/$DeadLetterQueue"
 module.exports =
 
@@ -18,6 +18,11 @@ class NotificationsReader
   getMaxDeliveryCount: =>
     (@_doWithTopic "getSubscription")()
     .then ([subscription]) => subscription?.MaxDeliveryCount or 10
+
+  # Starts to receive notifications and makes given http request with every received message.
+  runAndRequest: (messageToOptions, method) =>
+    @run (parsedMessageBody, message) =>
+      request["#{method}Async"] messageToOptions parsedMessageBody, message
 
   # Starts to receive notifications and calls the given function with every received message.
   # processMessage: (parsedMessageBody, message) -> promise
