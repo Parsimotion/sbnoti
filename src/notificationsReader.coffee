@@ -26,7 +26,7 @@ class NotificationsReader
 
   _addDefaultOptions: (opts) => _.merge json: true, opts
   
-  _makeRequest: (messageToOptions, method) =>
+  _makeRequest: (messageToOptions, method = 'post') =>
     options = @_addDefaultOptions messageToOptions parsedMessageBody, message
     request["#{method}Async"] options  
 
