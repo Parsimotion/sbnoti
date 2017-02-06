@@ -21,7 +21,11 @@ class NotificationsReader
 
   # Starts to receive notifications and makes given http request with every received message.
   runAndRequest: (messageToOptions, method) =>
-    @run (parsedMessageBody, message) =>  
+    @run @makeRequestCallback messageToOptions, method
+
+  #Para mas -placer- testeabilidad
+  _makeRequestCallback: (messageToOptions, method) =>
+    (parsedMessageBody, message) =>  
       @_makeRequest messageToOptions(parsedMessageBody, message), method
 
   _addDefaultOptions: (opts) => _.merge json: true, opts
