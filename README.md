@@ -2,12 +2,11 @@
 ##### (or `sbnoti` because Azure has problems with large path names -__-)
 Notifications Reader for Azure Service Bus
 
-Usage:
+### Usage:
 ```coffee-script
-Promise = require("bluebird")
-SBNotiBuilder = require("sbnoti")
+SbnotiBuilder = require("sbnoti")
 
-reader = new SBNotiBuilder()
+reader = new SbnotiBuilder()
 .withServiceBus #required
   connectionString: "the azure connection string"
   topic: "the topic name"
@@ -17,7 +16,6 @@ reader = new SBNotiBuilder()
     { name: "theNameOfTheCustomFilter", expression: "created = True" }
   ]
 .withLogging true # or simply .withLogging()
-.fromDeadLetter true # or simply .fromDeadLetter()
 .withConcurrency 25
 .withReceiveBatchSize 5
 .withWaitForMessageTime 3000
@@ -28,10 +26,44 @@ reader = new SBNotiBuilder()
   db: 3
   auth: "yourAuthToken"
 .build()
+```
+### To read from the dead letter subscription
+``` Coffeescript
+reader = new SbnotiBuilder()
+.withServiceBus #required
+  connectionString: "the azure connection string"
+  topic: "the topic name"
+  subscription: "the subscription name"
+.fromDeadLetter()
+.build()
+```
 
+### Also read from regular and dead letter at the same time!
+``` Coffeescript
+reader = new SbnotiBuilder()
+.withServiceBus #required
+  connectionString: "the azure connection string"
+  topic: "the topic name"
+  subscription: "the subscription name"
+.activeFor
+  pending: true #Read from regular subscription
+  failed: true  #Read from dead letter
+.build()
+```
+
+#### TIP: Use the booleans for pending and failed to control which readers are active
+
+#### A nice function to transform strings 'true' and 'false' to actual the boolean value or a default:
+``` Coffeescript
+stringToBoolean: (value,_default) ->
+  (value?.toLowerCase?() ? _default?.toString()) == 'true'
+```
+
+### To start the reader with a given process
+``` Coffeescript
+Promise = require("bluebird")
 reader.run (message) =>
   # do something with message
-  
   Promise.resolve "message processed ok"
   # or...
   Promise.reject "error processing the message"
