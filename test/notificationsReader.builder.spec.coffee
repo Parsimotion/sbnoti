@@ -91,7 +91,7 @@ describe "NotificationsReaderBuilder", ->
       ._getSbnotis()
       sbnotis.should.have.length 0
 
-    it "should build reader withouts sbnotis if options are false", ->
+    it "should build reader without sbnotis if options are false", ->
       sbnotis = builder
       .activeFor
         failed: false
