@@ -6,10 +6,16 @@ Promise = require("bluebird")
 NotificationsReaderBuilder = require("../src/notificationsReader.builder")
 { retryableMessage, redis, basicConfig, deadLetterConfig, filtersConfig, message } = require("../test/helpers/fixture")
 
+deadLetterReader = (config = basicConfig) => 
+  new NotificationsReaderBuilder()
+  .withConfig config
+  .fromDeadLetter()
+  .build()._sbnotis[0]
+
 reader = (config = basicConfig) =>
   new NotificationsReaderBuilder()
   .withConfig config
-  .build()
+  .build()._sbnotis[0]
 
 { observer, readerWithStubbedObserver } = {}
 
@@ -22,7 +28,6 @@ describe "NotificationsReader", ->
 
     it "should have correct defaults", ->
       reader().config.should.eql
-        app: "una-app"
         subscription: "una-subscription"
         connectionString: "un-connection-string"
         topic: "un-topic"
@@ -81,9 +86,10 @@ describe "NotificationsReader", ->
         message
         process: Promise.reject
         assertion: ->
+          
           mockAzure.spies.unlockMessage
           .called.should.eql false
-      }, reader deadLetterConfig
+      }, deadLetterReader()
 
     describe "Observers", ->
       beforeEach ->
@@ -92,7 +98,7 @@ describe "NotificationsReader", ->
           new NotificationsReaderBuilder()
           .withConfig basicConfig
           .withObservers observer
-          .build()
+          .build()._sbnotis[0]
 
       it "should notify success to observers on message success", (done)->
         assertAfterProcess done, {

@@ -5,6 +5,7 @@ Promise = require("bluebird")
 DidLastRetry = require("./observers/didLastRetry")
 DeadLetterSucceeded = require("./observers/deadLetterSucceeded")
 NotificationsReader = require("./notificationsReader")
+CompositeReader = require("./compositeReader")
 
 module.exports =
 
@@ -12,29 +13,42 @@ module.exports =
 # config = See README
 class NotificationsReaderBuilder
 
-  constructor: -> @config = {}
-
-  build: =>
-    @_validateRequired()
-
-    _.defaults @config,
+  constructor: -> 
+    @config =   
       concurrency: 25
       waitForMessageTime: 3000
       receiveBatchSize: 5
       log: false
-      deadLetter: false
+    @activeReaders = pending: true
 
-    reader = new NotificationsReader @config
+  _getReader: => new CompositeReader @_getSbnotis()
+
+  _getSbnotis: =>
+    sbnotis = []
+    { pending, failed } = @activeReaders
+    sbnotis.push false if pending
+    sbnotis.push true if failed
+    sbnotis.map @_getSbnoti
+
+  _getSbnoti: (deadLetter) =>
+    reader = new NotificationsReader _.merge {}, @config, { deadLetter }
     _.assign reader, serviceBusService: Promise.promisifyAll(
       azure.createServiceBusService @config.connectionString
     )
-    _.assign reader, observers: @config.observers or []
+    _.assign reader, observers: @config.observers or []  
 
+  build: =>
+    @_validateRequired()
+    @_getReader()
+
+  activeFor: (@activeReaders = {}) => @
 
   withConfig: (config) => #Manual config, nice for testing purposes
     @_assignAndReturnSelf config
-  withHealth: (redis) =>
-    @_validateRedisConfig redis
+  withHealth: (config) =>
+    { app, redis } = config
+    @_assignAndReturnSelf { app }
+    @_validateHealthConfig config
     @withObservers [ DidLastRetry, DeadLetterSucceeded ].map (Observer) => new Observer redis
   withObservers: (observers) =>
     @_assignAndReturnSelf observers: _.castArray observers
@@ -44,8 +58,7 @@ class NotificationsReaderBuilder
     @_assignAndReturnSelf { filters }
   withLogging: (log = true) =>
     @_assignAndReturnSelf { log }
-  fromDeadLetter: (deadLetter = true) =>
-    @_assignAndReturnSelf { deadLetter }
+  fromDeadLetter: => @activeFor failed: true
   withConcurrency: (concurrency) =>
     @_assignAndReturnSelf { concurrency }
   withReceiveBatchSize: (receiveBatchSize) =>
@@ -57,12 +70,14 @@ class NotificationsReaderBuilder
     _.assign @config, value
     @
 
+  _validateHealthConfig: ({redis, app}) =>
+    @_validateRedisConfig redis
+    throw new Error "Please provide app for health" unless @config.app?
+
   _validateRedisConfig: (redis) =>
     redisIsComplete = redis.host? and redis.port? and redis.auth? and redis.db?
     throw new Error "Redis incomplete. Please provide host, port, auth and db." unless redisIsComplete
 
   _validateRequired: =>
     allRequired = @config.topic? and @config.subscription? and @config.connectionString?
-    if not _.isEmpty @config.observers
-      allRequired = allRequired and @config.app?
-    throw new Error "Provide at least topic, subscription and a service bus connectionString. Also app if using health." unless allRequired
+    throw new Error "Provide at least topic, subscription and a service bus connectionString." unless allRequired
