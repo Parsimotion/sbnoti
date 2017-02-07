@@ -131,11 +131,6 @@ describe "NotificationsReader", ->
           .withObservers observer
           .build()._sbnotis[0]
 
-      it "should add default request options", ->
-        url = "http://un.endpoint.com"
-        reader()._addDefaultOptions { url }
-        .should.eql { url, json: true }
-
       it "should make a post request", (done) ->
         shouldMakeRequest 'post', done
 
@@ -152,7 +147,7 @@ describe "NotificationsReader", ->
         assertAfterProcess done, {
           message
           process:
-            readerWithStubbedObserver._makeRequestCallback (aMessage) =>
+            readerWithStubbedObserver.http.process (aMessage) =>
               { uri, body: aMessage }
             , 'post'
           assertion: ->
@@ -171,7 +166,7 @@ describe "NotificationsReader", ->
         assertAfterProcess done, {
           message
           process:
-            readerWithStubbedObserver._makeRequestCallback (aMessage) =>
+            readerWithStubbedObserver.http.process (aMessage) =>
               { uri, body: aMessage }
             , 'post', ignoredStatusCodes: [400]
           assertion: ->
@@ -191,7 +186,7 @@ shouldMakeRequest = (method, done) ->
   assertAfterProcess done, {
     message
     process:
-      aReader._makeRequestCallback (aMessage) =>
+      aReader.http.process (aMessage) =>
         { uri, body: aMessage }
       , method
     assertion: -> scopeEndpoint.isDone().should.eql true

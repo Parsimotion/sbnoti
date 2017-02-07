@@ -2,7 +2,7 @@ _ = require("lodash")
 azure = require("azure")
 async = require("async")
 Promise = require("bluebird")
-request = Promise.promisifyAll require("request")
+http = require("./services/http")
 DEAD_LETTER_SUFFIX = "/$DeadLetterQueue"
 module.exports =
 
@@ -11,6 +11,7 @@ module.exports =
 class NotificationsReader
 
   constructor: (@config) ->
+    _.assign @, { http }
 
   isReadingFromDeadLetter: => @config.deadLetter
 
@@ -21,23 +22,7 @@ class NotificationsReader
 
   # Starts to receive notifications and makes given http request with every received message.
   runAndRequest: (messageToOptions, method, options) =>
-    @run @makeRequestCallback messageToOptions, method, options
-
-  #Para mas -placer- testeabilidad
-  _makeRequestCallback: (messageToOptions, method, { @ignoredStatusCodes } = {}) =>
-    (parsedMessageBody, message) =>
-      @_makeRequest messageToOptions(parsedMessageBody, message), method
-
-  _addDefaultOptions: (opts) => _.merge json: true, opts
-
-  _makeRequest: (options, method = 'post') =>
-    request["#{method}Async"] @_addDefaultOptions options
-    .spread ({ statusCode, body }) =>
-      throw new Error body if @_isErrorStatusCode statusCode
-
-  _isErrorStatusCode: (code) =>
-    code >= 400 and !_.includes(@ignoredStatusCodes or [], code)
-
+    @run http.process messageToOptions, method, options
   # Starts to receive notifications and calls the given function with every received message.
   # processMessage: (parsedMessageBody, message) -> promise
   run: (processMessage) =>
