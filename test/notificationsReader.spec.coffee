@@ -143,6 +143,11 @@ describe "NotificationsReader", ->
             observer.success.calledOnce.should.eql true
           checkIfItFails readerWithStubbedObserver, {ignoredStatusCodes: [400]}, assertion, done
 
+        it "should not fail if status code is < 400", (done) ->
+          assertion = ->
+            observer.error.notCalled.should.eql true
+            observer.success.calledOnce.should.eql true
+          checkIfItFails readerWithStubbedObserver, {}, assertion, done, status: 200
 
 assertRequest = (method, { status, body }, aReader, done, extraAssertion = (->), options = {}) ->
   nocked = nock uri
@@ -161,8 +166,8 @@ assertRequest = (method, { status, body }, aReader, done, extraAssertion = (->),
       extraAssertion()
   }, aReader
 
-checkIfItFails = (aReader, options, assertion, done) ->
-  assertRequest 'post', { status:400, body: bad:'request' }, aReader, done, assertion, options
+checkIfItFails = (aReader, options, assertion, done, { status } = {}) ->
+  assertRequest 'post', { status: status or 400, body: bad:'request' }, aReader, done, assertion, options
 
 shouldMakeRequest = (method, done) ->
   aReader = reader()
