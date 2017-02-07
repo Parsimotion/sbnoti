@@ -79,11 +79,12 @@ messageToOptions = (message) =>
   headers:
     authorization: "access token"
 
-reader.runAndPost messageToOptions
+reader.runAndPost messageToOptions, ignoredStatusCodes: [409,503]
 reader.runAndGet messageToOptions
 reader.runAndPut messageToOptions
 reader.runAndDelete messageToOptions
 #or also
-reader.runAndRequest messageToOptions, 'post' #'get','delete','update'
+method = 'post',  #'get','delete','update'
+reader.runAndRequest messageToOptions, method, ignoredStatusCodes: [409]
 
 ```
