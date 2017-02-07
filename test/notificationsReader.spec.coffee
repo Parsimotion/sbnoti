@@ -132,40 +132,19 @@ describe "NotificationsReader", ->
           shouldMakeRequest 'put', done
 
         it "should fail if status code is >= 400 and not ignored", (done) ->
-          scopeEndpoint = nock uri
-          .post "/", { un: 'json', CompanyId: 123, ResourceId: 456 }
-          .reply 400, bad:'request'
-
-          assertAfterProcess done, {
-            message
-            process:
-              readerWithStubbedObserver.http.process (aMessage) =>
-                { uri, body: aMessage }
-              , 'post'
-            assertion: ->
-              scopeEndpoint.isDone().should.eql true
-              observer.success.notCalled.should.eql true
-              observer.error.calledOnce.should.eql true
-          }, readerWithStubbedObserver
+          assertion = ->
+            observer.success.notCalled.should.eql true
+            observer.error.calledOnce.should.eql true
+          checkIfItFails readerWithStubbedObserver, {}, assertion, done
 
         it "should not fail if status code is >= 400 but ignored", (done) ->
-          scopeEndpoint = nock uri
-          .post "/", { un: 'json', CompanyId: 123, ResourceId: 456 }
-          .reply 400, bad:'request'
+          assertion = ->
+            observer.error.notCalled.should.eql true
+            observer.success.calledOnce.should.eql true
+          checkIfItFails readerWithStubbedObserver, {ignoredStatusCodes: [400]}, assertion, done
 
-          assertAfterProcess done, {
-            message
-            process:
-              readerWithStubbedObserver.http.process (aMessage) =>
-                { uri, body: aMessage }
-              , 'post', ignoredStatusCodes: [400]
-            assertion: ->
-              scopeEndpoint.isDone().should.eql true
-              observer.error.notCalled.should.eql true
-              observer.success.calledOnce.should.eql true
-          }, readerWithStubbedObserver
 
-assertRequest = (method, { status, body }, aReader, process, assertion, done) ->
+assertRequest = (method, { status, body }, aReader, done, extraAssertion = (->), options = {}) ->
   nocked = nock uri
   scopeEndpoint =
     nocked[method] "/", { un: 'json', CompanyId: 123, ResourceId: 456 }
@@ -173,20 +152,21 @@ assertRequest = (method, { status, body }, aReader, process, assertion, done) ->
 
   assertAfterProcess done, {
     message
-    process
+    process:
+      aReader.http.process (aMessage) =>
+        { uri, body: aMessage }
+      , method, options
     assertion: ->
       scopeEndpoint.isDone().should.eql true
-      assertion()
+      extraAssertion()
   }, aReader
+
+checkIfItFails = (aReader, options, assertion, done) ->
+  assertRequest 'post', { status:400, body: bad:'request' }, aReader, done, assertion, options
 
 shouldMakeRequest = (method, done) ->
   aReader = reader()
-  assertion = ->
-  process =
-    aReader.http.process (aMessage) =>
-      { uri, body: aMessage }
-    , method
-  assertRequest method, { status:200, body: todo:'bien' }, aReader, process, assertion, done
+  assertRequest method, { status:200, body: todo:'bien' }, aReader, done
 
 assertAfterProcess = (done, { message, process, assertion }, aReader = reader()) ->
   aReader._buildQueueWith process
