@@ -124,6 +124,13 @@ describe "NotificationsReader", ->
         nock.disableNetConnect()
         nock.enableNetConnect('127.0.0.1')
 
+        observer = new ObserverStub()
+        readerWithStubbedObserver = do ->
+          new NotificationsReaderBuilder()
+          .withConfig basicConfig
+          .withObservers observer
+          .build()._sbnotis[0]
+
       it "should add default request options", ->
         url = "http://un.endpoint.com"
         reader()._addDefaultOptions { url }
@@ -134,6 +141,44 @@ describe "NotificationsReader", ->
 
       it "should make a put request", (done) ->
         shouldMakeRequest 'put', done
+
+      it "should fail if status code is >= 400 and not ignored", (done) ->
+        uri = "http://un.endpoint.com"
+
+        scopeEndpoint = nock uri
+        .post "/", { un: 'json', CompanyId: 123, ResourceId: 456 }
+        .reply 400, bad:'request'
+
+        assertAfterProcess done, {
+          message
+          process:
+            readerWithStubbedObserver._makeRequestCallback (aMessage) =>
+              { uri, body: aMessage }
+            , 'post'
+          assertion: ->
+            scopeEndpoint.isDone().should.eql true
+            observer.success.notCalled.should.eql true
+            observer.error.calledOnce.should.eql true
+        }, readerWithStubbedObserver
+
+      it "should not fail if status code is >= 400 but ignored", (done) ->
+        uri = "http://un.endpoint.com"
+
+        scopeEndpoint = nock uri
+        .post "/", { un: 'json', CompanyId: 123, ResourceId: 456 }
+        .reply 400, bad:'request'
+
+        assertAfterProcess done, {
+          message
+          process:
+            readerWithStubbedObserver._makeRequestCallback (aMessage) =>
+              { uri, body: aMessage }
+            , 'post', ignoredStatusCodes: [400]
+          assertion: ->
+            scopeEndpoint.isDone().should.eql true
+            observer.error.notCalled.should.eql true
+            observer.success.calledOnce.should.eql true
+        }, readerWithStubbedObserver
 
 shouldMakeRequest = (method, done) ->
   uri = "http://un.endpoint.com"
