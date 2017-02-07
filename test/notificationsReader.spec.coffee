@@ -168,6 +168,18 @@ describe "NotificationsReader", ->
               observer.success.calledOnce.should.eql true
           }, readerWithStubbedObserver
 
+assertRequest = (method, { status, response }, aReader, process, assertion, done) ->
+  uri = "http://un.endpoint.com"
+  scopeEndpoint = nock uri
+  .post "/", { un: 'json', CompanyId: 123, ResourceId: 456 }
+  .reply status, response
+
+  assertAfterProcess done, {
+    message
+    process
+    assertion
+  }, aReader
+
 shouldMakeRequest = (method, done) ->
   uri = "http://un.endpoint.com"
   aReader = reader()
