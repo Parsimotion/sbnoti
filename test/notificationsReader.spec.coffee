@@ -18,12 +18,13 @@ reader = (config = basicConfig) =>
   .withConfig config
   .build()._sbnotis[0]
 
-{ observer, readerWithStubbedObserver } = {}
+{ uri, observer, readerWithStubbedObserver } = {}
 
 describe "NotificationsReader", ->
 
   beforeEach ->
     mockAzure.refreshSpies()
+    uri = "http://un.endpoint.com"
 
   describe "Reader", ->
 
@@ -131,8 +132,6 @@ describe "NotificationsReader", ->
           shouldMakeRequest 'put', done
 
         it "should fail if status code is >= 400 and not ignored", (done) ->
-          uri = "http://un.endpoint.com"
-
           scopeEndpoint = nock uri
           .post "/", { un: 'json', CompanyId: 123, ResourceId: 456 }
           .reply 400, bad:'request'
@@ -150,8 +149,6 @@ describe "NotificationsReader", ->
           }, readerWithStubbedObserver
 
         it "should not fail if status code is >= 400 but ignored", (done) ->
-          uri = "http://un.endpoint.com"
-
           scopeEndpoint = nock uri
           .post "/", { un: 'json', CompanyId: 123, ResourceId: 456 }
           .reply 400, bad:'request'
@@ -168,34 +165,28 @@ describe "NotificationsReader", ->
               observer.success.calledOnce.should.eql true
           }, readerWithStubbedObserver
 
-assertRequest = (method, { status, response }, aReader, process, assertion, done) ->
-  uri = "http://un.endpoint.com"
-  scopeEndpoint = nock uri
-  .post "/", { un: 'json', CompanyId: 123, ResourceId: 456 }
-  .reply status, response
+assertRequest = (method, { status, body }, aReader, process, assertion, done) ->
+  nocked = nock uri
+  scopeEndpoint =
+    nocked[method] "/", { un: 'json', CompanyId: 123, ResourceId: 456 }
+    .reply status, body
 
   assertAfterProcess done, {
     message
     process
-    assertion
+    assertion: ->
+      scopeEndpoint.isDone().should.eql true
+      assertion()
   }, aReader
 
 shouldMakeRequest = (method, done) ->
-  uri = "http://un.endpoint.com"
   aReader = reader()
-  nocked = nock uri
-  scopeEndpoint =
-    nocked[method] "/", { un: 'json', CompanyId: 123, ResourceId: 456 }
-    .reply 200, todo:'bien'
-
-  assertAfterProcess done, {
-    message
-    process:
-      aReader.http.process (aMessage) =>
-        { uri, body: aMessage }
-      , method
-    assertion: -> scopeEndpoint.isDone().should.eql true
-  }, aReader
+  assertion = ->
+  process =
+    aReader.http.process (aMessage) =>
+      { uri, body: aMessage }
+    , method
+  assertRequest method, { status:200, body: todo:'bien' }, aReader, process, assertion, done
 
 assertAfterProcess = (done, { message, process, assertion }, aReader = reader()) ->
   aReader._buildQueueWith process
