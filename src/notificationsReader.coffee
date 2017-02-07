@@ -20,18 +20,22 @@ class NotificationsReader
     .then ([subscription]) => subscription?.MaxDeliveryCount or 10
 
   # Starts to receive notifications and makes given http request with every received message.
-  runAndRequest: (messageToOptions, method) =>
+  runAndRequest: (messageToOptions, method, { @ignoredStatusCodes }) =>
     @run @makeRequestCallback messageToOptions, method
 
   #Para mas -placer- testeabilidad
   _makeRequestCallback: (messageToOptions, method) =>
-    (parsedMessageBody, message) =>  
+    (parsedMessageBody, message) =>
       @_makeRequest messageToOptions(parsedMessageBody, message), method
 
   _addDefaultOptions: (opts) => _.merge json: true, opts
-  
+
   _makeRequest: (options, method = 'post') =>
     request["#{method}Async"] @_addDefaultOptions options
+    .tap ({ statusCode, body }) => throw new Error body if @_isErrorStatusCode statusCode
+
+  _isErrorStatusCode: (code) =>
+    code >= 400 and !_.includes(@ignoredStatusCodes, code)
 
   # Starts to receive notifications and calls the given function with every received message.
   # processMessage: (parsedMessageBody, message) -> promise

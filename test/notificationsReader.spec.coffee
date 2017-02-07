@@ -7,7 +7,7 @@ NotificationsReaderBuilder = require("../src/notificationsReader.builder")
 nock = require("nock")
 { retryableMessage, redis, basicConfig, deadLetterConfig, filtersConfig, message } = require("../test/helpers/fixture")
 
-deadLetterReader = (config = basicConfig) => 
+deadLetterReader = (config = basicConfig) =>
   new NotificationsReaderBuilder()
   .withConfig config
   .fromDeadLetter()
@@ -87,7 +87,7 @@ describe "NotificationsReader", ->
         message
         process: Promise.reject
         assertion: ->
-          
+
           mockAzure.spies.unlockMessage
           .called.should.eql false
       }, deadLetterReader()
@@ -123,7 +123,7 @@ describe "NotificationsReader", ->
       beforeEach ->
         nock.disableNetConnect()
         nock.enableNetConnect('127.0.0.1')
-      
+
       it "should add default request options", ->
         url = "http://un.endpoint.com"
         reader()._addDefaultOptions { url }
@@ -139,14 +139,14 @@ shouldMakeRequest = (method, done) ->
   uri = "http://un.endpoint.com"
   aReader = reader()
   nocked = nock uri
-  scopeEndpoint = 
+  scopeEndpoint =
     nocked[method] "/", { un: 'json', CompanyId: 123, ResourceId: 456 }
     .reply 200, todo:'bien'
 
   assertAfterProcess done, {
     message
     process:
-      aReader._makeRequestCallback (aMessage) => 
+      aReader._makeRequestCallback (aMessage) =>
         { uri, body: aMessage }
       , method
     assertion: -> scopeEndpoint.isDone().should.eql true
