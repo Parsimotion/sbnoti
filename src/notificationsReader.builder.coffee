@@ -4,6 +4,7 @@ async = require("async")
 Promise = require("bluebird")
 DidLastRetry = require("./observers/didLastRetry")
 DeadLetterSucceeded = require("./observers/deadLetterSucceeded")
+DelayObserver = require("./observers/delay/delayObserver")
 NotificationsReader = require("./notificationsReader")
 CompositeReader = require("./compositeReader")
 
@@ -45,11 +46,14 @@ class NotificationsReaderBuilder
 
   withConfig: (config) => #Manual config, nice for testing purposes
     @_assignAndReturnSelf config
+
   withHealth: (config) =>
     { app, redis } = config
     @_assignAndReturnSelf { app }
     @_validateHealthConfig config
+    @_assignAndReturnSelf delayObserver: new DelayObserver redis
     @withObservers [ DidLastRetry, DeadLetterSucceeded ].map (Observer) => new Observer redis
+
   withObservers: (observers) =>
     @_assignAndReturnSelf observers: _.castArray observers
   withServiceBus: (serviceBusConfig) =>

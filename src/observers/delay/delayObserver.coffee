@@ -4,7 +4,7 @@ moment = require("moment")
 
 module.exports =
 
-  new class DelayObserver extends RedisObserver
+  class DelayObserver extends RedisObserver
 
     constructor: ->
       @currentDelay = minimal
