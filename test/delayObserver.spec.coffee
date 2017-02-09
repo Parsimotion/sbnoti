@@ -17,7 +17,7 @@ describe "Delay observer", ->
       .withArgs "health-queue/una-app/123/un-topic/una-subscription/456", '"Huge"'
       .calledOnce.should.eql true
 
-  it "should not publish if a non dead letter message runs successfully", ->
+  it "should not publish if delay did not change", ->
     observer.currentDelay = huge
     observer.handle notification
     .then =>
