@@ -8,12 +8,12 @@ module.exports =
 
   class DelayObserver extends RedisObserver
 
-    constructor: ->
+    constructor: (redis) ->
+      super redis
       @currentDelay = minimal
 
     handle: (notification) =>
       delay = @_messageDelay notification.message
-      console.log delay
       return Promise.resolve() unless @_delayChanged delay
       @currentDelay = delay
       @publish notification, @currentDelay.name
