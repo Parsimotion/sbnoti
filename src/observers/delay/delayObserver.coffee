@@ -7,19 +7,25 @@ module.exports =
   new class DelayObserver extends RedisObserver
 
     constructor: ->
-      @currentDelay = Minimal
+      @currentDelay = minimal
 
     handle: (notification) =>
-      milliseconds = @_millisecondsDelay notification
-      @publish notification, milliseconds if @_delayChanged notification, milliseconds
+      delay = @_messageDelay notification.message
 
-    _millisecondsDelay: ({ message }) =>
-      enqueuedTime = moment new Date message.brokerProperties.EnqueuedTimeUtc
-      enqueuedTime.diff(moment())
+      if @_delayChanged delay
+        @currentDelay = delay
+        @publish notification, @currentDelay.name
+      #Quiere dejar de decir delay!?!
+      #https://www.youtube.com/watch?v=ZpNWkFWNhw0
 
-    _delayChanged: (notification, millisecondsDelay) =>
-      newDelay = _delayByMilliseconds millisecondsDelay
-      !_.isEqual newDelay, @currentDelay
+    _messageDelay: (message) =>
+      @_delayByMilliseconds @_millisecondsDelay message
+
+    _millisecondsDelay: ({ brokerProperties: { EnqueuedTimeUtc } }) =>
+      enqueuedTime = moment new Date EnqueuedTimeUtc
+      moment().diff enqueuedTime
+
+    _delayChanged: (newDelay) => !_.isEqual newDelay, @currentDelay
 
     _delayByMilliseconds: (ms)=>
       __inRange = _.partial _.inRange, ms
