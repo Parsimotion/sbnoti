@@ -5,7 +5,7 @@ module.exports = #milliseconds
     value: process.env.MINIMAL_DELAY or 100 #Innecesario?
   mild:
     name: "Mild"
-    value: process.env.MILD_DELAY or convert(10).from('s').to 'ms'
+    value: process.env.MILD_DELAY or convert(2).from('s').to 'ms'
   moderate:
     name: "Moderate"
     value: process.env.MODERATE_DELAY or convert(10).from('s').to 'ms'

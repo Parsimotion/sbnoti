@@ -25,6 +25,7 @@ module.exports =
 
     _millisecondsDelay: ({ brokerProperties: { EnqueuedTimeUtc } }, now) =>
       enqueuedTime = moment new Date EnqueuedTimeUtc
+      console.log EnqueuedTimeUtc, now, moment(now).diff enqueuedTime
       moment(now).diff enqueuedTime
 
     _delayChanged: (newDelay) => !_.isEqual newDelay, @currentDelay

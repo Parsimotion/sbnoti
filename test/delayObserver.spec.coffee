@@ -1,9 +1,10 @@
 require("./helpers/mockedRedis")
-{ redis, notification } = require("./helpers/fixture")
-DelayObserver = require("../src/observers/delay/delayObserver")
-{ huge } = require("../src/observers/delay/delays")
-{ observer } = {}
 should = require("should")
+moment = require("moment")
+DelayObserver = require("../src/observers/delay/delayObserver")
+{ redis, notification } = require("./helpers/fixture")
+{ minimal, mild, moderate, high, huge } = require("../src/observers/delay/delays")
+{ observer } = {}
 
 describe "Delay observer", ->
   beforeEach ->
@@ -24,3 +25,20 @@ describe "Delay observer", ->
       observer
       .redis.spies.publishAsync
       .notCalled.should.eql true
+
+  it "should get delay in milliseconds", ->
+    enqueuedTime = moment new Date notification.message.brokerProperties.EnqueuedTimeUtc
+    now = enqueuedTime.add 100, 'ms'
+    delay = observer._millisecondsDelay notification.message, now.toDate()
+    delay.should.eql 100
+
+  it "should transform delay in milliseconds to delay object", ->
+    assertDelay minimal.value, minimal.name
+    assertDelay mild.value, mild.name
+    assertDelay moderate.value, moderate.name
+    assertDelay high.value, high.name
+    assertDelay huge.value, huge.name
+
+assertDelay = (ms, name) =>
+  observer._delayByMilliseconds ms
+  .name.should.eql name
