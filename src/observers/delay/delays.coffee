@@ -2,7 +2,7 @@ convert = require("convert-units")
 module.exports = #milliseconds
   minimal:
     name: "Minimal"
-    value: process.env.MINIMAL_DELAY or 100
+    value: process.env.MINIMAL_DELAY or 100 #Innecesario?
   mild:
     name: "Mild"
     value: process.env.MILD_DELAY or convert(10).from('s').to 'ms'
