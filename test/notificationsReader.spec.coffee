@@ -4,9 +4,10 @@ _ = require("lodash")
 should = require("should")
 Promise = require("bluebird")
 NotificationsReaderBuilder = require("../src/notificationsReader.builder")
+nock = require("nock")
 { retryableMessage, redis, basicConfig, deadLetterConfig, filtersConfig, message } = require("../test/helpers/fixture")
 
-deadLetterReader = (config = basicConfig) => 
+deadLetterReader = (config = basicConfig) =>
   new NotificationsReaderBuilder()
   .withConfig config
   .fromDeadLetter()
@@ -17,12 +18,13 @@ reader = (config = basicConfig) =>
   .withConfig config
   .build()._sbnotis[0]
 
-{ observer, readerWithStubbedObserver } = {}
+{ uri, observer, readerWithStubbedObserver } = {}
 
 describe "NotificationsReader", ->
 
   beforeEach ->
     mockAzure.refreshSpies()
+    uri = "http://un.endpoint.com"
 
   describe "Reader", ->
 
@@ -42,16 +44,16 @@ describe "NotificationsReader", ->
       .then =>
         mockAzure.spies.createSubscription
         .withArgs "un-topic","una-subscription"
-        .calledOnce.should.eql true
+        .calledOnce.should.be.true()
 
     it "should add filter to subscription", ->
       reader(filtersConfig)._createSubscription()
       .then =>
-        mockAzure.spies.deleteRule.calledOnce.should.eql true
-        mockAzure.spies.createSubscription.calledOnce.should.eql true
+        mockAzure.spies.deleteRule.calledOnce.should.be.true()
+        mockAzure.spies.createSubscription.calledOnce.should.be.true()
         mockAzure.spies.createRule
         .withArgs "un-topic","una-subscription","un-filtro", { sqlExpressionFilter: 'un_filtro eq \'True\'' }
-        .calledOnce.should.eql true
+        .calledOnce.should.be.true()
 
     it "should build a message", ->
       aMessage = un: "mensaje"
@@ -68,7 +70,7 @@ describe "NotificationsReader", ->
         assertion: ->
           mockAzure.spies.deleteMessage
           .withArgs message
-          .calledOnce.should.eql true
+          .calledOnce.should.be.true()
       }
 
     it "should unlock message if it finishes with errors when it isn't dead letter", (done) ->
@@ -78,7 +80,7 @@ describe "NotificationsReader", ->
         assertion: ->
           mockAzure.spies.unlockMessage
           .withArgs message
-          .calledOnce.should.eql true
+          .calledOnce.should.be.true()
       }
 
     it "should not unlock message if it finishes with errors when it is dead letter", (done)->
@@ -86,7 +88,7 @@ describe "NotificationsReader", ->
         message
         process: Promise.reject
         assertion: ->
-          
+
           mockAzure.spies.unlockMessage
           .called.should.eql false
       }, deadLetterReader()
@@ -105,8 +107,8 @@ describe "NotificationsReader", ->
           message
           process: Promise.resolve
           assertion: ->
-            observer.success.calledOnce.should.eql true
-            observer.error.notCalled.should.eql true
+            observer.success.calledOnce.should.be.true()
+            observer.error.notCalled.should.be.true()
         }, readerWithStubbedObserver
 
       it "should notify error to observers on message error", (done)->
@@ -114,9 +116,62 @@ describe "NotificationsReader", ->
           message
           process: Promise.reject
           assertion: ->
-            observer.error.calledOnce.should.eql true
-            observer.success.notCalled.should.eql true
+            observer.error.calledOnce.should.be.true()
+            observer.success.notCalled.should.be.true()
         }, readerWithStubbedObserver
+
+      describe "Run and request", ->
+        beforeEach ->
+          nock.disableNetConnect()
+          nock.enableNetConnect('127.0.0.1')
+
+        it "should make a post request", (done) ->
+          shouldMakeRequest 'post', done
+
+        it "should make a put request", (done) ->
+          shouldMakeRequest 'put', done
+
+        it "should fail if status code is >= 400 and not ignored", (done) ->
+          assertion = ->
+            observer.success.notCalled.should.be.true()
+            observer.error.calledOnce.should.be.true()
+          checkIfItFails readerWithStubbedObserver, {}, assertion, done
+
+        it "should not fail if status code is >= 400 but ignored", (done) ->
+          assertion = ->
+            observer.error.notCalled.should.be.true()
+            observer.success.calledOnce.should.be.true()
+          checkIfItFails readerWithStubbedObserver, {ignoredStatusCodes: [400]}, assertion, done
+
+        it "should not fail if status code is < 400", (done) ->
+          assertion = ->
+            observer.error.notCalled.should.be.true()
+            observer.success.calledOnce.should.be.true()
+          checkIfItFails readerWithStubbedObserver, {}, assertion, done, status: 200
+
+assertRequest = (method, { status, body }, aReader, done, extraAssertion = (->), options = {}) ->
+  nocked = nock uri
+  scopeEndpoint =
+    nocked[method] "/", { un: 'json', CompanyId: 123, ResourceId: 456 }
+    .reply status, body
+
+  assertAfterProcess done, {
+    message
+    process:
+      aReader.http.process (aMessage) =>
+        { uri, body: aMessage }
+      , method, options
+    assertion: ->
+      scopeEndpoint.isDone().should.be.true()
+      extraAssertion()
+  }, aReader
+
+checkIfItFails = (aReader, options, assertion, done, { status } = {}) ->
+  assertRequest 'post', { status: status or 400, body: bad:'request' }, aReader, done, assertion, options
+
+shouldMakeRequest = (method, done) ->
+  aReader = reader()
+  assertRequest method, { status:200, body: todo:'bien' }, aReader, done
 
 assertAfterProcess = (done, { message, process, assertion }, aReader = reader()) ->
   aReader._buildQueueWith process

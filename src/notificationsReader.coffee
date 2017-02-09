@@ -2,7 +2,7 @@ _ = require("lodash")
 azure = require("azure")
 async = require("async")
 Promise = require("bluebird")
-
+http = require("./services/http")
 DEAD_LETTER_SUFFIX = "/$DeadLetterQueue"
 module.exports =
 
@@ -11,6 +11,7 @@ module.exports =
 class NotificationsReader
 
   constructor: (@config) ->
+    _.assign @, { http }
 
   isReadingFromDeadLetter: => @config.deadLetter
 
@@ -19,6 +20,9 @@ class NotificationsReader
     (@_doWithTopic "getSubscription")()
     .then ([subscription]) => subscription?.MaxDeliveryCount or 10
 
+  # Starts to receive notifications and makes given http request with every received message.
+  runAndRequest: (messageToOptions, method, options) =>
+    @run http.process messageToOptions, method, options
   # Starts to receive notifications and calls the given function with every received message.
   # processMessage: (parsedMessageBody, message) -> promise
   run: (processMessage) =>
