@@ -4,6 +4,7 @@ async = require("async")
 Promise = require("bluebird")
 http = require("./services/http")
 DEAD_LETTER_SUFFIX = "/$DeadLetterQueue"
+
 module.exports =
 
 # Notifications reader from Azure Service Bus.
@@ -50,7 +51,9 @@ class NotificationsReader
       response
       .then -> callback()
       .catch (err) -> callback(err or "unknown error")
-      .finally -> _cleanInterval()
+      .finally ->
+        _cleanInterval()
+        @_notifyDelay message
 
     , @config.concurrency
 
@@ -122,8 +125,14 @@ class NotificationsReader
 
   _notifySuccess: (message) => @_notify message, 'success'
 
+  _notifyDelay: (message) => #TODO: VER SI USAR NOTIFY PARAMETRIZANDO OBSERVERS
+    @config.delayObserver?.handle @_buildNotification message
+
+  _buildNotification: (message) =>
+    _.merge { message }, _.pick @config, ["app","topic","subscription"]
+
   _notify: (message, event, opts) =>
-    notification = _.merge { message }, _.pick @config, ["app","topic","subscription"]
+    notification = @_buildNotification message
     @observers.forEach (observer) => observer[event] notification, @, opts
 
   _buildMessage: (message) ->

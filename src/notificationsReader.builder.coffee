@@ -13,8 +13,8 @@ module.exports =
 # config = See README
 class NotificationsReaderBuilder
 
-  constructor: -> 
-    @config =   
+  constructor: ->
+    @config =
       concurrency: 25
       waitForMessageTime: 3000
       receiveBatchSize: 5
@@ -35,7 +35,7 @@ class NotificationsReaderBuilder
     _.assign reader, serviceBusService: Promise.promisifyAll(
       azure.createServiceBusService @config.connectionString
     )
-    _.assign reader, observers: @config.observers or []  
+    _.assign reader, observers: @config.observers or []
 
   build: =>
     @_validateRequired()
