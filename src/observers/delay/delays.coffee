@@ -11,7 +11,7 @@ module.exports = #milliseconds
     value: process.env.MODERATE_DELAY or convert(10).from('s').to 'ms'
   high:
     name: "High"
-    value: process.env.HIGH_DELAY or convert(5).from('m').to 'ms'
+    value: process.env.HIGH_DELAY or convert(5).from('min').to 'ms'
   huge:
     name: "Huge"
-    value: process.env.HUGE_DELAY or convert(10).from('m').to 'ms'
+    value: process.env.HUGE_DELAY or convert(10).from('min').to 'ms'
