@@ -36,7 +36,8 @@ class NotificationsReaderBuilder
     _.assign reader, serviceBusService: Promise.promisifyAll(
       azure.createServiceBusService @config.connectionString
     )
-    _.assign reader, observers: @config.observers or []
+    _.assign reader, statusObservers: @config.statusObservers or []
+    _.assign reader, finishObservers: @config.finishObservers or []
 
   build: =>
     @_validateRequired()
@@ -51,11 +52,13 @@ class NotificationsReaderBuilder
     { app, redis } = config
     @_assignAndReturnSelf { app }
     @_validateHealthConfig config
-    @_assignAndReturnSelf delayObserver: new DelayObserver redis
-    @withObservers [ DidLastRetry, DeadLetterSucceeded ].map (Observer) => new Observer redis
-
+    __toRedisObserver = (Observer) => new Observer redis
+    @withFinishObservers [ DelayObserver ].map __toRedisObserver
+    @withObservers [ DidLastRetry, DeadLetterSucceeded ].map __toRedisObserver
+  withFinishObservers: (observers) =>
+    @_assignAndReturnSelf finishObservers: _.castArray observers
   withObservers: (observers) =>
-    @_assignAndReturnSelf observers: _.castArray observers
+    @_assignAndReturnSelf statusObservers: _.castArray observers
   withServiceBus: (serviceBusConfig) =>
     @_assignAndReturnSelf serviceBusConfig
   withFilters: (filters) =>

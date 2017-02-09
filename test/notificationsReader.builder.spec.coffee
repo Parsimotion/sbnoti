@@ -53,7 +53,7 @@ describe "NotificationsReaderBuilder", ->
         app: "la-aplicacion-que-esta-usando-sbnoti"
       .build()._sbnotis[0]
 
-      reader.observers.forEach (observer) =>
+      reader.statusObservers.forEach (observer) =>
         (observer instanceof DidLastRetry or
         observer instanceof DeadLetterSucceeded)
         .should.be.true()
