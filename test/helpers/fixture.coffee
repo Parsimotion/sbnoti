@@ -14,6 +14,7 @@ message =
   brokerProperties:
     MessageId: "el-message-id"
     DeliveryCount: 11
+    EnqueuedTimeUtc: "Sat, 05 Nov 2016 16:44:43 GMT"
 
 retryableMessage = _(_.clone(message))
   .assign

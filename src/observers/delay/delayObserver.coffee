@@ -1,7 +1,8 @@
-{ minimal, mild, moderate, high, huge } = require("./delays")
-RedisObserver = require("../redisObserver")
+_ = require("lodash")
 moment = require("moment")
 Promise = require("bluebird")
+RedisObserver = require("../redisObserver")
+{ minimal, mild, moderate, high, huge } = require("./delays")
 
 module.exports =
 
@@ -12,6 +13,7 @@ module.exports =
 
     handle: (notification) =>
       delay = @_messageDelay notification.message
+      console.log delay
       return Promise.resolve() unless @_delayChanged delay
       @currentDelay = delay
       @publish notification, @currentDelay.name
