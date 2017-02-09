@@ -32,7 +32,7 @@ module.exports =
     _delayByMilliseconds: (ms)=>
       __inRange = _.partial _.inRange, ms
       switch
-        when __inRange mild.value then minimal
+        when __inRange minimal.value, mild.value then minimal
         when __inRange mild.value, moderate.value then mild
         when __inRange moderate.value, high.value then moderate
         when __inRange high.value, huge.value then high
