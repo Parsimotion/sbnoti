@@ -1,6 +1,7 @@
 { minimal, mild, moderate, high, huge } = require("./delays")
 RedisObserver = require("../redisObserver")
 moment = require("moment")
+Promise = require("bluebird")
 
 module.exports =
 
@@ -11,10 +12,9 @@ module.exports =
 
     handle: (notification) =>
       delay = @_messageDelay notification.message
-
-      if @_delayChanged delay
-        @currentDelay = delay
-        @publish notification, @currentDelay.name
+      return Promise.resolve() unless @_delayChanged delay
+      @currentDelay = delay
+      @publish notification, @currentDelay.name
       #Quiere dejar de decir delay!?!
       #https://www.youtube.com/watch?v=ZpNWkFWNhw0
 
