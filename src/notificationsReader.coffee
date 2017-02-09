@@ -121,19 +121,19 @@ class NotificationsReader
         .catch (error) =>
           @_log "--> Error deleting message: #{error}. #{messageId}"
 
-  _notifyError: (message, error) => @_notify message, 'error', error
+  _notifyError: (message, error) => @_notify @observers, message, 'error', error
 
-  _notifySuccess: (message) => @_notify message, 'success'
+  _notifySuccess: (message) => @_notify @observers, message, 'success'
 
-  _notifyDelay: (message) => #TODO: VER SI USAR NOTIFY PARAMETRIZANDO OBSERVERS
-    @config.delayObserver?.handle @_buildNotification message
+  _notifyDelay: (message) =>
+    @_notify @config.delayObserver, message, 'handle'
 
   _buildNotification: (message) =>
     _.merge { message }, _.pick @config, ["app","topic","subscription"]
 
-  _notify: (message, event, opts) =>
+  _notify: (observers, message, event, opts) =>
     notification = @_buildNotification message
-    @observers.forEach (observer) => observer[event] notification, @, opts
+    _.castArray(observers).forEach (observer) => observer?[event] notification, @, opts
 
   _buildMessage: (message) ->
     clean = (body) =>
