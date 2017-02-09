@@ -2,6 +2,7 @@ mockAzure = require("../test/helpers/mockedAzure")
 { basicConfig } = require("../test/helpers/fixture")
 DidLastRetry = require("../src/observers/didLastRetry")
 DeadLetterSucceeded = require("../src/observers/deadLetterSucceeded")
+DelayObserver = require("../src/observers/delay/delayObserver")
 should = require("should")
 NotificationsReaderBuilder = require("../src/notificationsReader.builder")
 Promise = require("bluebird")
@@ -41,20 +42,22 @@ describe "NotificationsReaderBuilder", ->
   describe "When health is requested", ->
 
     it "should add health observers if health fully configured", ->
-      builder
+      reader = builder
       .withServiceBus basicConfig
       .withHealth
-        redis: 
+        redis:
           host: "host"
           port: 6739
           auth: "asdf"
           db: 2
         app: "la-aplicacion-que-esta-usando-sbnoti"
       .build()._sbnotis[0]
-      .observers.forEach (observer) =>
+
+      reader.observers.forEach (observer) =>
         (observer instanceof DidLastRetry or
         observer instanceof DeadLetterSucceeded)
         .should.eql true
+      reader.config.delayObserver instanceof DelayObserver
 
     it "should throw if health is not fully configured", ->
       builder
@@ -62,27 +65,27 @@ describe "NotificationsReaderBuilder", ->
       .withHealth.should.throw()
 
     it "should throw if no app is provided", ->
-      healthWithoutApp = => 
+      healthWithoutApp = =>
         builder
         .withServiceBus basicConfig
         .withHealth
-          redis: 
+          redis:
             host: "host"
             port: 6739
             auth: "asdf"
             db: 2
       healthWithoutApp.should.throw()
-  
+
     it "should throw if redis is incomplete", ->
-      healthWithIncompleteRedis = => 
+      healthWithIncompleteRedis = =>
         builder
         .withServiceBus basicConfig
         .withHealth
-          redis: 
+          redis:
             host: "host"
             port: 6739
       healthWithIncompleteRedis.should.throw()
-  
+
   describe "With explicit activeFor call", ->
     it "should build reader with two sbnotis", ->
       sbnotis = builder
@@ -99,7 +102,7 @@ describe "NotificationsReaderBuilder", ->
       .activeFor
         pending: true
       ._getSbnotis()
-      onlyOne sbnotis, deadLetter: false 
+      onlyOne sbnotis, deadLetter: false
 
     it "should build reader with only a deadLetter sbnoti", ->
       sbnotis = builder
@@ -128,7 +131,7 @@ describe "NotificationsReaderBuilder", ->
         pending: true
         failed: false
       ._getSbnotis()
-      onlyOne sbnotis, deadLetter: false 
+      onlyOne sbnotis, deadLetter: false
 
     it "should build one deadletter reader", ->
       sbnotis = builder
@@ -143,7 +146,7 @@ describe "NotificationsReaderBuilder", ->
       sbnotis = builder._getSbnotis()
       onlyOne sbnotis, deadLetter: false
 
-onlyOne = (sbnotis, { deadLetter }) -> 
+onlyOne = (sbnotis, { deadLetter }) ->
   sbnotis.should.have.length 1
   readsFromDeadLetter(sbnotis[0]).should.eql deadLetter
 
