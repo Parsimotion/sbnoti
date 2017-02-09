@@ -2,7 +2,7 @@ _ = require("lodash")
 moment = require("moment")
 Promise = require("bluebird")
 RedisObserver = require("../redisObserver")
-{ minimal, mild, moderate, high, huge } = require("./delays")
+{ minimal, mild, moderate, high, huge } = require("./delayLevels")
 
 module.exports =
 

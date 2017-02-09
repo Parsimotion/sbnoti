@@ -3,7 +3,7 @@ should = require("should")
 moment = require("moment")
 DelayObserver = require("../src/observers/delay/delayObserver")
 { redis, notification } = require("./helpers/fixture")
-{ minimal, mild, moderate, high, huge } = require("../src/observers/delay/delays")
+{ minimal, mild, moderate, high, huge } = require("../src/observers/delay/delayLevels")
 { observer } = {}
 
 describe "Delay observer", ->

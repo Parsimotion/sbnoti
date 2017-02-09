@@ -1,8 +1,10 @@
 convert = require("convert-units")
+
+#delay : { name, value: amount of milliseconds where this delay level is considered to start }
 module.exports = #milliseconds
   minimal:
     name: "Minimal"
-    value: process.env.MINIMAL_DELAY or 100 #Innecesario?
+    value: 0
   mild:
     name: "Mild"
     value: process.env.MILD_DELAY or convert(2).from('s').to 'ms'
