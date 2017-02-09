@@ -23,6 +23,6 @@ module.exports =
     _getChannel: ({ message: { brokerProperties: { MessageId }, body }, app, topic, subscription }) =>
         parsedBody = JSON.parse body
         { CompanyId, ResourceId } = parsedBody
-        "#{@_channelPrefix()}/#{app}/#{CompanyId}/#{topic}/#{subscription}/#{ResourceId}"
+        "#{@_channelPrefix_()}/#{app}/#{CompanyId}/#{topic}/#{subscription}/#{ResourceId}"
 
-    _channelPrefix: -> "health-message"
+    _channelPrefix_: -> "health-message"

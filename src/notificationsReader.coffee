@@ -51,7 +51,7 @@ class NotificationsReader
       response
       .then -> callback()
       .catch (err) -> callback(err or "unknown error")
-      .finally ->
+      .finally =>
         _cleanInterval()
         @_notifyDelay message
 
