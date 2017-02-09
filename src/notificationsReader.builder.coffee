@@ -36,8 +36,10 @@ class NotificationsReaderBuilder
     _.assign reader, serviceBusService: Promise.promisifyAll(
       azure.createServiceBusService @config.connectionString
     )
-    _.assign reader, statusObservers: @config.statusObservers or []
-    _.assign reader, finishObservers: @config.finishObservers or []
+    __addObservers = (key) =>
+      _.assign reader, "#{key}": @config[key] or []
+    __addObservers 'statusObservers'
+    __addObservers 'finishObservers'
 
   build: =>
     @_validateRequired()
