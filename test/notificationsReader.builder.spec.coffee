@@ -56,7 +56,7 @@ describe "NotificationsReaderBuilder", ->
       reader.observers.forEach (observer) =>
         (observer instanceof DidLastRetry or
         observer instanceof DeadLetterSucceeded)
-        .should.eql true
+        .should.be.true()
       reader.config.delayObserver instanceof DelayObserver
 
     it "should throw if health is not fully configured", ->
@@ -95,7 +95,7 @@ describe "NotificationsReaderBuilder", ->
       ._getSbnotis()
       sbnotis.should.have.length 2
       readsFromDeadLetter(sbnotis[0]).should.eql false
-      readsFromDeadLetter(sbnotis[1]).should.eql true
+      readsFromDeadLetter(sbnotis[1]).should.be.true()
 
     it "should build reader with only a regular sbnoti", ->
       sbnotis = builder

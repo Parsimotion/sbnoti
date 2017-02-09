@@ -16,7 +16,7 @@ describe "Delay observer", ->
       observer
       .redis.spies.publishAsync
       .withArgs "health-queue/una-app/123/un-topic/una-subscription/456", 'Huge'
-      .calledOnce.should.eql true
+      .calledOnce.should.be.true()
 
   it "should not publish if delay did not change", ->
     observer.currentDelay = huge
@@ -24,7 +24,7 @@ describe "Delay observer", ->
     .then =>
       observer
       .redis.spies.publishAsync
-      .notCalled.should.eql true
+      .notCalled.should.be.true()
 
   it "should get delay in milliseconds", ->
     enqueuedTime = moment new Date notification.message.brokerProperties.EnqueuedTimeUtc
