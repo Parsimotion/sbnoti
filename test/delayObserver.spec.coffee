@@ -15,7 +15,7 @@ describe "Delay observer", ->
     .then =>
       observer
       .redis.spies.publishAsync
-      .withArgs "health-queue/una-app/123/un-topic/una-subscription/456", '"Huge"'
+      .withArgs "health-queue/una-app/123/un-topic/una-subscription/456", 'Huge'
       .calledOnce.should.eql true
 
   it "should not publish if delay did not change", ->

@@ -39,5 +39,5 @@ module.exports =
         when __inRange high.value, huge.value then high
         else huge
 
-
+    _buildValue_ : _.identity
     _channelPrefix_: -> "health-queue"
