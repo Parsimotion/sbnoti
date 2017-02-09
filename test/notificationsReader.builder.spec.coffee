@@ -96,7 +96,7 @@ describe "NotificationsReaderBuilder", ->
         failed: true
       ._getSbnotis()
       sbnotis.should.have.length 2
-      readsFromDeadLetter(sbnotis[0]).should.eql false
+      readsFromDeadLetter(sbnotis[0]).should.be.false()
       readsFromDeadLetter(sbnotis[1]).should.be.true()
 
     it "should build reader with only a regular sbnoti", ->
