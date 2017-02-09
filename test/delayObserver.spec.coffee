@@ -11,7 +11,7 @@ describe "Delay observer", ->
     observer = new DelayObserver redis
 
   it "should publish if delay changes", ->
-    observer.handle notification
+    observer.finish notification
     .then =>
       observer
       .redis.spies.publishAsync
@@ -20,7 +20,7 @@ describe "Delay observer", ->
 
   it "should not publish if delay did not change", ->
     observer.currentDelay = huge
-    observer.handle notification
+    observer.finish notification
     .then =>
       observer
       .redis.spies.publishAsync

@@ -53,7 +53,7 @@ class NotificationsReader
       .catch (err) -> callback(err or "unknown error")
       .finally =>
         _cleanInterval()
-        @_notifyDelay message
+        @_notifyFinish message
 
     , @config.concurrency
 
@@ -125,8 +125,8 @@ class NotificationsReader
 
   _notifySuccess: (message) => @_notify @observers, message, 'success'
 
-  _notifyDelay: (message) =>
-    @_notify @config.delayObserver, message, 'handle'
+  _notifyFinish: (message) =>
+    @_notify @config.delayObserver, message, 'finish'
 
   _buildNotification: (message) =>
     _.merge { message }, _.pick @config, ["app","topic","subscription"]

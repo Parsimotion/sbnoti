@@ -12,7 +12,7 @@ module.exports =
       super redis
       @currentDelay = minimal
 
-    handle: (notification) =>
+    finish: (notification) =>
       delay = @_messageDelay notification.message
       return Promise.resolve() unless @_delayChanged delay
       @currentDelay = delay
