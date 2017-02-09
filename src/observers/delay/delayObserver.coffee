@@ -21,11 +21,11 @@ module.exports =
       #https://www.youtube.com/watch?v=ZpNWkFWNhw0
 
     _messageDelay: (message) =>
-      @_delayByMilliseconds @_millisecondsDelay message
+      @_delayByMilliseconds @_millisecondsDelay message, new Date()
 
-    _millisecondsDelay: ({ brokerProperties: { EnqueuedTimeUtc } }) =>
+    _millisecondsDelay: ({ brokerProperties: { EnqueuedTimeUtc } }, now) =>
       enqueuedTime = moment new Date EnqueuedTimeUtc
-      moment().diff enqueuedTime
+      moment(now).diff enqueuedTime
 
     _delayChanged: (newDelay) => !_.isEqual newDelay, @currentDelay
 
