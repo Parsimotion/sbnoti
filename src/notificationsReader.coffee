@@ -125,14 +125,14 @@ class NotificationsReader
 
   _notifySuccess: (message) => @_notify @statusObservers, message, 'success'
 
-  _notifyFinish: (message) => @_notify @config.finishObservers, message, 'finish'
+  _notifyFinish: (message) => @_notify @finishObservers, message, 'finish'
 
   _buildNotification: (message) =>
     _.merge { message }, _.pick @config, ["app","topic","subscription"]
 
   _notify: (observers, message, event, opts) =>
     notification = @_buildNotification message
-    observers?.forEach (observer) => observer[event] notification, @, opts
+    observers.forEach (observer) => observer[event] notification, @, opts
 
   _buildMessage: (message) ->
     clean = (body) =>
