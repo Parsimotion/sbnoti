@@ -33,14 +33,15 @@ class NotificationsReaderBuilder
 
   _getSbnoti: (deadLetter) =>
     reader = new NotificationsReader _.merge {}, @config, { deadLetter }
-    _.assign reader, serviceBusService: Promise.promisifyAll(
-      azure.createServiceBusService @config.connectionString
-    )
+    _.assign reader, serviceBusService: @_getServiceBus()
     __addObservers = (key) =>
       _.assign reader, "#{key}": @config[key] or []
     __addObservers 'statusObservers'
     __addObservers 'finishObservers'
-
+  
+  _getServiceBus: =>
+    Promise.promisifyAll azure.createServiceBusService @config.connectionString
+  
   build: =>
     @_validateRequired()
     @_getReader()
