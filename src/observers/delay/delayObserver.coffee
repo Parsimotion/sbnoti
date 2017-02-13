@@ -33,6 +33,6 @@ module.exports =
       delayLeves = [ minimal, mild, moderate, high, huge ]
       _.findLast delayLeves, ({value}) => ms >= value
 
-    _buildValue_ : _.identity
+    _parseValue_ : _.identity
 
     _channelPrefix_: -> "health-queue"
