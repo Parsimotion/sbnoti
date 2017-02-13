@@ -46,7 +46,7 @@ class NotificationsReader
 
       if not response?.then?
         _cleanInterval()
-        return callback("The receiver didn't returned a Promise.")
+        return callback("The receiver didn't return a Promise.")
 
       response
       .then -> callback()
