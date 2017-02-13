@@ -58,8 +58,7 @@ describe "NotificationsReaderBuilder", ->
         observer instanceof DeadLetterSucceeded)
         .should.be.true()
       reader.finishObservers.forEach (observer) =>
-        (observer instanceof DelayObserver)
-        .should.be.true()
+        observer.should.be.an.instanceof DelayObserver
 
     it "should throw if health is not fully configured", ->
       builder
