@@ -90,7 +90,7 @@ describe "NotificationsReader", ->
         assertion: ->
 
           mockAzure.spies.unlockMessage
-          .called.should.eql false
+          .called.should.be.false()
       }, deadLetterReader()
 
     describe "Observers", ->

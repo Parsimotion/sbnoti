@@ -12,9 +12,9 @@ module.exports =
     success: ->
 
     publish: (notification, value) =>
-      @redis.publishAsync @_getChannel(notification), @_buildValue value
+      @redis.publishAsync @_getChannel(notification), @_buildValue_ value
 
-    _buildValue: (value) ->
+    _buildValue_: (value) ->
       try
         JSON.stringify value
       catch
@@ -23,5 +23,6 @@ module.exports =
     _getChannel: ({ message: { brokerProperties: { MessageId }, body }, app, topic, subscription }) =>
         parsedBody = JSON.parse body
         { CompanyId, ResourceId } = parsedBody
-        "health-message/#{app}/#{CompanyId}/#{topic}/#{subscription}/#{ResourceId}"
+        "#{@_channelPrefix_()}/#{app}/#{CompanyId}/#{topic}/#{subscription}/#{ResourceId}"
 
+    _channelPrefix_: -> "health-message"

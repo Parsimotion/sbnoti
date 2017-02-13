@@ -4,6 +4,7 @@ async = require("async")
 Promise = require("bluebird")
 DidLastRetry = require("./observers/didLastRetry")
 DeadLetterSucceeded = require("./observers/deadLetterSucceeded")
+DelayObserver = require("./observers/delay/delayObserver")
 NotificationsReader = require("./notificationsReader")
 CompositeReader = require("./compositeReader")
 
@@ -13,8 +14,8 @@ module.exports =
 # config = See README
 class NotificationsReaderBuilder
 
-  constructor: -> 
-    @config =   
+  constructor: ->
+    @config =
       concurrency: 25
       waitForMessageTime: 3000
       receiveBatchSize: 5
@@ -32,11 +33,15 @@ class NotificationsReaderBuilder
 
   _getSbnoti: (deadLetter) =>
     reader = new NotificationsReader _.merge {}, @config, { deadLetter }
-    _.assign reader, serviceBusService: Promise.promisifyAll(
-      azure.createServiceBusService @config.connectionString
-    )
-    _.assign reader, observers: @config.observers or []  
-
+    _.assign reader, serviceBusService: @_getServiceBus()
+    __addObservers = (key) =>
+      _.assign reader, "#{key}": @config[key] or []
+    __addObservers 'statusObservers'
+    __addObservers 'finishObservers'
+  
+  _getServiceBus: =>
+    Promise.promisifyAll azure.createServiceBusService @config.connectionString
+  
   build: =>
     @_validateRequired()
     @_getReader()
@@ -45,13 +50,18 @@ class NotificationsReaderBuilder
 
   withConfig: (config) => #Manual config, nice for testing purposes
     @_assignAndReturnSelf config
+
   withHealth: (config) =>
     { app, redis } = config
     @_assignAndReturnSelf { app }
     @_validateHealthConfig config
-    @withObservers [ DidLastRetry, DeadLetterSucceeded ].map (Observer) => new Observer redis
+    __toRedisObserver = (Observer) => new Observer redis
+    @withFinishObservers [ DelayObserver ].map __toRedisObserver
+    @withObservers [ DidLastRetry, DeadLetterSucceeded ].map __toRedisObserver
+  withFinishObservers: (observers) =>
+    @_assignAndReturnSelf finishObservers: _.castArray observers
   withObservers: (observers) =>
-    @_assignAndReturnSelf observers: _.castArray observers
+    @_assignAndReturnSelf statusObservers: _.castArray observers
   withServiceBus: (serviceBusConfig) =>
     @_assignAndReturnSelf serviceBusConfig
   withFilters: (filters) =>

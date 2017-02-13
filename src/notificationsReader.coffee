@@ -4,6 +4,7 @@ async = require("async")
 Promise = require("bluebird")
 http = require("./services/http")
 DEAD_LETTER_SUFFIX = "/$DeadLetterQueue"
+
 module.exports =
 
 # Notifications reader from Azure Service Bus.
@@ -45,12 +46,14 @@ class NotificationsReader
 
       if not response?.then?
         _cleanInterval()
-        return callback("The receiver didn't returned a Promise.")
+        return callback("The receiver didn't return a Promise.")
 
       response
       .then -> callback()
       .catch (err) -> callback(err or "unknown error")
-      .finally -> _cleanInterval()
+      .finally =>
+        _cleanInterval()
+        @_notifyFinish message
 
     , @config.concurrency
 
@@ -118,13 +121,18 @@ class NotificationsReader
         .catch (error) =>
           @_log "--> Error deleting message: #{error}. #{messageId}"
 
-  _notifyError: (message, error) => @_notify message, 'error', error
+  _notifyError: (message, error) => @_notify @statusObservers, message, 'error', error
 
-  _notifySuccess: (message) => @_notify message, 'success'
+  _notifySuccess: (message) => @_notify @statusObservers, message, 'success'
 
-  _notify: (message, event, opts) =>
-    notification = _.merge { message }, _.pick @config, ["app","topic","subscription"]
-    @observers.forEach (observer) => observer[event] notification, @, opts
+  _notifyFinish: (message) => @_notify @finishObservers, message, 'finish'
+
+  _buildNotification: (message) =>
+    _.merge { message }, _.pick @config, ["app","topic","subscription"]
+
+  _notify: (observers, message, event, opts) =>
+    notification = @_buildNotification message
+    observers.forEach (observer) => observer[event] notification, @, opts
 
   _buildMessage: (message) ->
     clean = (body) =>

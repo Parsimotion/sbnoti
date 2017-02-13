@@ -17,12 +17,12 @@ describe "Did Last Retry observer", ->
       observer
       .redis.spies.publishAsync
       .withArgs "health-message/una-app/123/un-topic/una-subscription/456", JSON.stringify { success:false, error }
-      .calledOnce.should.eql true
+      .calledOnce.should.be.true()
 
   it "should not publish if a failed mesasge is not on its last retry", ->
     observer.error retryableNotification, mockReader
     .then =>
       observer
       .redis.spies.publishAsync
-      .notCalled.should.eql true
+      .notCalled.should.be.true()
 
