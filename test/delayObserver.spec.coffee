@@ -33,11 +33,8 @@ describe "Delay observer", ->
     delay.should.eql 100
 
   it "should transform delay in milliseconds to delay object", ->
-    assertDelay minimal.value, minimal.name
-    assertDelay mild.value, mild.name
-    assertDelay moderate.value, moderate.name
-    assertDelay high.value, high.name
-    assertDelay huge.value, huge.name
+    [ minimal, mild, moderate, high, huge ].forEach (level) =>
+      assertDelay level.value, level.name
 
 assertDelay = (ms, name) =>
   observer._delayByMilliseconds ms
