@@ -12,13 +12,9 @@ module.exports =
     success: ->
 
     publish: (notification, value) =>
-      @redis.publishAsync @_getChannel(notification), @_buildValue value, notification
+      @redis.publishAsync @_getChannel(notification), @_buildValue_ value, notification
 
-    _buildValue: (rawValue, { message: { brokerProperties: { MessageId } } }) =>
-      value = @_parseValue_ rawValue
-      JSON.stringify { value, message: MessageId }
-
-    _parseValue_: (value) ->
+    _buildValue_: (value, notification) ->
       try
         JSON.stringify value
       catch
