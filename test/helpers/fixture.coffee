@@ -16,6 +16,8 @@ message =
     DeliveryCount: 11
     EnqueuedTimeUtc: "Sat, 05 Nov 2016 16:44:43 GMT"
 
+messageWithParsedBody = _.update _.clone(message), "body", JSON.parse
+
 retryableMessage = _(_.clone(message))
   .assign
       brokerProperties:
@@ -23,16 +25,16 @@ retryableMessage = _(_.clone(message))
         DeliveryCount: 1
   .value()
 
-notification =_.omit _.merge {app: 'una-app'}, basicConfig, { message }, "connectionString"
+notification =_.omit _.merge {app: 'una-app'}, basicConfig, { message: messageWithParsedBody }, "connectionString"
 retryableNotification =_.merge {}, notification,{ message: retryableMessage }
 
 module.exports = {
   basicConfig
   deadLetterConfig
   filtersConfig
-  message
   retryableMessage
   redis
   notification
   retryableNotification
+  getMessage: -> _.clone message
 }

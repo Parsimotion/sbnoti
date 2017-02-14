@@ -5,7 +5,7 @@ should = require("should")
 Promise = require("bluebird")
 NotificationsReaderBuilder = require("../src/notificationsReader.builder")
 nock = require("nock")
-{ retryableMessage, redis, basicConfig, deadLetterConfig, filtersConfig, message } = require("../test/helpers/fixture")
+{ retryableMessage, redis, basicConfig, deadLetterConfig, filtersConfig, getMessage } = require("../test/helpers/fixture")
 
 deadLetterReader = (config = basicConfig) =>
   new NotificationsReaderBuilder()
@@ -18,13 +18,14 @@ reader = (config = basicConfig) =>
   .withConfig config
   .build()._sbnotis[0]
 
-{ uri, observer, readerWithStubbedObserver } = {}
+{ uri, observer, readerWithStubbedObserver, message } = {}
 
 describe "NotificationsReader", ->
 
   beforeEach ->
     mockAzure.refreshSpies()
     uri = "http://un.endpoint.com"
+    message = getMessage()
 
   describe "Reader", ->
 
@@ -57,11 +58,11 @@ describe "NotificationsReader", ->
 
     it "should build a message", ->
       aMessage = un: "mensaje"
-      reader()._buildMessage body: JSON.stringify aMessage
+      reader()._sanitizedBody body: JSON.stringify aMessage
       .should.eql aMessage
 
     it "should return undefined if message is not valid json", ->
-      should.not.exists reader()._buildMessage body: "esto no es jsonizable"
+      should.not.exists reader()._sanitizedBody body: "esto no un json"
 
     it "should delete message if it finishes ok", (done) ->
       assertAfterProcess done, {

@@ -42,7 +42,7 @@ class NotificationsReader
     , @config.concurrency * 2
 
     @toProcess = async.queue (message, callback) =>
-      response = try processMessage @_buildMessage(message), message
+      response = try processMessage message.body, message
       _cleanInterval = -> clearInterval message.interval
 
       if not response?.then?
@@ -100,6 +100,7 @@ class NotificationsReader
 
   _process: (lockedMessage) =>
     messageId = lockedMessage.brokerProperties?.MessageId
+    lockedMessage.body = @_sanitizedBody lockedMessage
     @_log "Receiving message... #{messageId}"
 
     renewLock = =>
@@ -135,7 +136,7 @@ class NotificationsReader
     notification = @_buildNotification message
     observers.forEach (observer) => observer[event] notification, @, opts
 
-  _buildMessage: (message) ->
+  _sanitizedBody: (message) ->
     clean = (body) =>
       # The messages come with shit before the "{" that breaks JSON.parse =|
       # Example: @strin3http://schemas.microsoft.com/2003/10/Serialization/p{"Changes":[{"Key":
