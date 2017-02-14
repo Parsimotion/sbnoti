@@ -6,7 +6,7 @@
     "url": "git://github.com/Parsimotion/sbnoti.git"
   },
   "version": "3.0.0",
-  "main": "src/main.js",
+  "main": "lib/index.js",
   "dependencies": {
     "async": "^1.5.2",
     "azure": "^0.10.6",
