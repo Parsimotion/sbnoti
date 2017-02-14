@@ -3,6 +3,7 @@ azure = require("azure")
 async = require("async")
 Promise = require("bluebird")
 http = require("./services/http")
+convert = require("convert-units")
 DEAD_LETTER_SUFFIX = "/$DeadLetterQueue"
 
 module.exports =
@@ -105,7 +106,7 @@ class NotificationsReader
       @_log "renewLock #{messageId}"
       (@_do "renewLockForMessage")(lockedMessage)
 
-    lockedMessage.interval = setInterval renewLock, 1000 * 5
+    lockedMessage.interval = setInterval renewLock, convert(5).from('s').to 'ms'
 
     onError = (error) =>
       @_log "--> Error processing message: #{error}. #{messageId}"

@@ -14,7 +14,7 @@ describe "Dead Letter Succeeded observer", ->
     .then =>
       observer
       .redis.spies.publishAsync
-      .withArgs "health-message/una-app/123/un-topic/una-subscription/456", JSON.stringify success:true
+      .withArgs "health-message-sb/una-app/123/un-topic/una-subscription/456", JSON.stringify success:true
       .calledOnce.should.be.true()
 
   it "should not publish if a non dead letter message runs successfully", ->
@@ -22,5 +22,4 @@ describe "Dead Letter Succeeded observer", ->
     .then =>
       observer
       .redis.spies.publishAsync
-      .withArgs "health-message/una-app/123/un-topic/una-subscription/456", JSON.stringify success:true
       .notCalled.should.be.true()
