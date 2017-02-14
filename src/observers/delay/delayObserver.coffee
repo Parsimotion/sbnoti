@@ -35,4 +35,4 @@ module.exports =
 
     _buildValue_ : _.identity
 
-    _channelPrefix_: -> "health-queue"
+    _channelPrefix_: -> "health-queue-sb"
