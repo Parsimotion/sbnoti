@@ -61,7 +61,7 @@ class NotificationsReaderBuilder
       @withObservers [ DidLastRetry, DeadLetterSucceeded ].map __toRedisObserver
     catch e
       throw e if strict
-      @
+    @
 
   withFinishObservers: (observers) =>
     @_assignAndReturnSelf finishObservers: _.castArray observers
