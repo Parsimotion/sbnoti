@@ -97,15 +97,13 @@ describe "NotificationsReaderBuilder", ->
     describe "When not using strict health mode", ->
 
       it "should not add status observers if health is not fully configured", ->
-
-        aReader = builder
+        build = builder
         .withServiceBus basicConfig
         .withHealth {}
-        .build()
-        aReader._sbnotis[0].statusObservers.should.have.length 0
+        shouldBuildWithoutStatusObservers build
 
       it "should not add status observers if no app is provided", ->
-        aReader = builder
+        build = builder
         .withServiceBus basicConfig
         .withHealth
           redis:
@@ -113,19 +111,16 @@ describe "NotificationsReaderBuilder", ->
             port: 6739
             auth: "asdf"
             db: 2
-        .build()
-        aReader._sbnotis[0].statusObservers.should.have.length 0
+        shouldBuildWithoutStatusObservers build
 
       it "should not add status observers if redis is incomplete", ->
-        aReader =
-          builder
+        build = builder
           .withServiceBus basicConfig
           .withHealth
             redis:
               host: "host"
               port: 6739
-          .build()
-        aReader._sbnotis[0].statusObservers.should.have.length 0
+        shouldBuildWithoutStatusObservers build
 
   describe "With explicit activeFor call", ->
     it "should build reader with two sbnotis", ->
@@ -192,3 +187,6 @@ onlyOne = (sbnotis, { deadLetter }) ->
   readsFromDeadLetter(sbnotis[0]).should.eql deadLetter
 
 readsFromDeadLetter = (sbnoti) -> sbnoti.config.deadLetter
+
+shouldBuildWithoutStatusObservers = (builder) ->
+  _.head(builder.build()._sbnotis).statusObservers.should.have.length 0
