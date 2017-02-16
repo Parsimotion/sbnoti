@@ -60,14 +60,50 @@ describe "NotificationsReaderBuilder", ->
       reader.finishObservers.forEach (observer) =>
         observer.should.be.an.instanceof DelayObserver
 
-    it "should throw if health is not fully configured", ->
-      builder
-      .withServiceBus basicConfig
-      .withHealth.should.throw()
+    describe "When using strict health mode", ->
+      it "should throw if health is not fully configured", ->
+        healthWithNoData = ->
+          builder
+          .withServiceBus basicConfig
+          .withHealth strict: true
 
-    it "should throw if no app is provided", ->
-      healthWithoutApp = =>
-        builder
+        healthWithNoData.should.throw()
+
+      it "should throw if no app is provided", ->
+        healthWithoutApp = =>
+          builder
+          .withServiceBus basicConfig
+          .withHealth
+            redis:
+              host: "host"
+              port: 6739
+              auth: "asdf"
+              db: 2
+            strict: true
+
+        healthWithoutApp.should.throw()
+
+      it "should throw if redis is incomplete", ->
+        healthWithIncompleteRedis = =>
+          builder
+          .withServiceBus basicConfig
+          .withHealth
+            redis:
+              host: "host"
+              port: 6739
+            strict: true
+        healthWithIncompleteRedis.should.throw()
+
+    describe "When not using strict health mode", ->
+
+      it "should not add status observers if health is not fully configured", ->
+        build = builder
+        .withServiceBus basicConfig
+        .withHealth {}
+        shouldBuildWithoutStatusObservers build
+
+      it "should not add status observers if no app is provided", ->
+        build = builder
         .withServiceBus basicConfig
         .withHealth
           redis:
@@ -75,17 +111,16 @@ describe "NotificationsReaderBuilder", ->
             port: 6739
             auth: "asdf"
             db: 2
-      healthWithoutApp.should.throw()
+        shouldBuildWithoutStatusObservers build
 
-    it "should throw if redis is incomplete", ->
-      healthWithIncompleteRedis = =>
-        builder
-        .withServiceBus basicConfig
-        .withHealth
-          redis:
-            host: "host"
-            port: 6739
-      healthWithIncompleteRedis.should.throw()
+      it "should not add status observers if redis is incomplete", ->
+        build = builder
+          .withServiceBus basicConfig
+          .withHealth
+            redis:
+              host: "host"
+              port: 6739
+        shouldBuildWithoutStatusObservers build
 
   describe "With explicit activeFor call", ->
     it "should build reader with two sbnotis", ->
@@ -152,3 +187,6 @@ onlyOne = (sbnotis, { deadLetter }) ->
   readsFromDeadLetter(sbnotis[0]).should.eql deadLetter
 
 readsFromDeadLetter = (sbnoti) -> sbnoti.config.deadLetter
+
+shouldBuildWithoutStatusObservers = (builder) ->
+  _.head(builder.build()._sbnotis).statusObservers.should.have.length 0
