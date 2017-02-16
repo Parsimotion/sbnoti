@@ -60,32 +60,39 @@ describe "NotificationsReaderBuilder", ->
       reader.finishObservers.forEach (observer) =>
         observer.should.be.an.instanceof DelayObserver
 
-    it "should throw if health is not fully configured", ->
-      builder
-      .withServiceBus basicConfig
-      .withHealth.should.throw()
+    describe "When using strict health mode", ->
+      it "should throw if health is not fully configured", ->
+        healthWithNoData = ->
+          builder
+          .withServiceBus basicConfig
+          .withHealth strict: true
 
-    it "should throw if no app is provided", ->
-      healthWithoutApp = =>
-        builder
-        .withServiceBus basicConfig
-        .withHealth
-          redis:
-            host: "host"
-            port: 6739
-            auth: "asdf"
-            db: 2
-      healthWithoutApp.should.throw()
+        healthWithNoData.should.throw()
 
-    it "should throw if redis is incomplete", ->
-      healthWithIncompleteRedis = =>
-        builder
-        .withServiceBus basicConfig
-        .withHealth
-          redis:
-            host: "host"
-            port: 6739
-      healthWithIncompleteRedis.should.throw()
+      it "should throw if no app is provided", ->
+        healthWithoutApp = =>
+          builder
+          .withServiceBus basicConfig
+          .withHealth
+            redis:
+              host: "host"
+              port: 6739
+              auth: "asdf"
+              db: 2
+            strict: true
+
+        healthWithoutApp.should.throw()
+
+      it "should throw if redis is incomplete", ->
+        healthWithIncompleteRedis = =>
+          builder
+          .withServiceBus basicConfig
+          .withHealth
+            redis:
+              host: "host"
+              port: 6739
+            strict: true
+        healthWithIncompleteRedis.should.throw()
 
   describe "With explicit activeFor call", ->
     it "should build reader with two sbnotis", ->
