@@ -14,7 +14,7 @@ module.exports =
 
     finish: (notification) =>
       delay = @_messageDelay notification.message
-      return Promise.resolve() unless @_delayChanged delay
+      return Promise.resolve() unless delay? and @_delayChanged delay
       @currentDelay = delay
       @publish notification, @currentDelay.name
       #Quiere dejar de decir delay!?!
@@ -24,8 +24,8 @@ module.exports =
       @_delayByMilliseconds @_millisecondsDelay message, new Date()
 
     _millisecondsDelay: ({ brokerProperties: { EnqueuedTimeUtc } }, now) =>
-      enqueuedTime = moment new Date EnqueuedTimeUtc
-      moment(now).diff enqueuedTime
+      enqueuedTime = moment.utc new Date EnqueuedTimeUtc
+      moment.utc(now).diff enqueuedTime
 
     _delayChanged: (newDelay) => !_.isEqual newDelay, @currentDelay
 
