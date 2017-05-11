@@ -21,7 +21,7 @@ module.exports =
         value
 
     _getChannel: ({ message: { brokerProperties: { MessageId }, body }, app, topic, subscription }) =>
-        { CompanyId, ResourceId } = body
-        "#{@_channelPrefix_()}/#{app}/#{CompanyId}/#{topic}/#{subscription}/#{ResourceId}"
+      { CompanyId, ResourceId } = body
+      "#{@_channelPrefix_()}/#{app}/#{CompanyId}/#{topic}/#{subscription}/#{ResourceId}"
 
     _channelPrefix_: -> "health-message-sb"

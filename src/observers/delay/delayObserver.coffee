@@ -36,3 +36,6 @@ module.exports =
     _buildValue_ : _.identity
 
     _channelPrefix_: -> "health-delay-sb"
+
+    _getChannel: ({ app, topic, subscription }) =>
+      "#{@_channelPrefix_()}/#{app}/#{topic}/#{subscription}"
