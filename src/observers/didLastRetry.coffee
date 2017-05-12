@@ -9,6 +9,5 @@ module.exports =
         if notification.message.brokerProperties.DeliveryCount >= maxDeliveryCount
           @publish notification, { success: false, error: error?.toString?() or "unknown error" }
 
-    _buildValue_: (rawValue, { message: { brokerProperties: { MessageId } } }) =>
-      value = super rawValue
+    _buildValue_: (value, { message: { brokerProperties: { MessageId } } }) =>
       JSON.stringify { value, message: MessageId }
