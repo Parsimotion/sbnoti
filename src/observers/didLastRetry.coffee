@@ -7,7 +7,7 @@ module.exports =
       reader.getMaxDeliveryCount()
       .then (maxDeliveryCount) =>
         if notification.message.brokerProperties.DeliveryCount >= maxDeliveryCount
-          @publish notification, { success: false, error: error?.toString?() or "unknown error" }
+          @publish notification, { success: false, error: error or "unknown error" }
 
     _buildValue_: (value, { message: { brokerProperties: { MessageId } } }) =>
       JSON.stringify { value, message: MessageId }
