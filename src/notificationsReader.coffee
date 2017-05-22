@@ -107,7 +107,7 @@ class NotificationsReader
       @_log "renewLock #{messageId}"
       (@_do "renewLockForMessage")(lockedMessage)
 
-    lockedMessage.interval = setInterval renewLock, convert(5).from('s').to 'ms'
+    lockedMessage.interval = setInterval renewLock, convert(30).from('s').to 'ms'
 
     onError = (error) =>
       @_log "--> Error processing message: #{error}. #{messageId}"
