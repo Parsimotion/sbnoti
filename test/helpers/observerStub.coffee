@@ -7,3 +7,6 @@ module.exports =
     constructor: ->
       @success = sinon.spy()
       @error = sinon.spy()
+
+    appliesToPending: -> true
+    appliesToFailed: -> true

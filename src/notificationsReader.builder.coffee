@@ -35,7 +35,9 @@ class NotificationsReaderBuilder
     reader = new NotificationsReader _.merge {}, @config, { deadLetter }
     _.assign reader, serviceBusService: @_getServiceBus()
     __addObservers = (key) =>
-      _.assign reader, "#{key}": @config[key] or []
+      observers = _.filter (@config[key] or []), (observer) ->
+        if deadLetter then observer.appliesToFailed() else observer.appliesToPending()
+      _.assign reader, "#{key}": observers
     __addObservers 'statusObservers'
     __addObservers 'finishObservers'
 

@@ -42,23 +42,22 @@ describe "NotificationsReaderBuilder", ->
   describe "When health is requested", ->
 
     it "should add health observers if health fully configured", ->
-      reader = builder
-      .withServiceBus basicConfig
-      .withHealth
-        redis:
-          host: "host"
-          port: 6739
-          auth: "asdf"
-          db: 2
-        app: "la-aplicacion-que-esta-usando-sbnoti"
-      .build()._sbnotis[0]
+      reader =
+        builder
+          .withServiceBus basicConfig
+          .withHealth
+            redis:
+              host: "host"
+              port: 6739
+              auth: "asdf"
+              db: 2
+            app: "la-aplicacion-que-esta-usando-sbnoti"
+          .build()._sbnotis[0]
 
-      reader.statusObservers.forEach (observer) =>
-        (observer instanceof DidLastRetry or
-        observer instanceof DeadLetterSucceeded)
-        .should.be.true()
-      reader.finishObservers.forEach (observer) =>
-        observer.should.be.an.instanceof DelayObserver
+      reader.statusObservers.should.have.lengthOf 1
+      reader.statusObservers[0].should.be.an.instanceof DidLastRetry
+      reader.finishObservers.should.have.lengthOf 1
+      reader.finishObservers[0].should.be.an.instanceof DelayObserver
 
     describe "When using strict health mode", ->
       it "should throw if health is not fully configured", ->
@@ -189,4 +188,4 @@ onlyOne = (sbnotis, { deadLetter }) ->
 readsFromDeadLetter = (sbnoti) -> sbnoti.config.deadLetter
 
 shouldBuildWithoutStatusObservers = (builder) ->
-  _.head(builder.build()._sbnotis).statusObservers.should.have.length 0
+  _.head(builder.build()._sbnotis).statusObservers.should.be.empty()

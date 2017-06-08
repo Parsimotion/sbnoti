@@ -13,3 +13,6 @@ module.exports =
 
     _buildValue_: (value, { message: { brokerProperties: { MessageId } } }) =>
       JSON.stringify { value, message: MessageId }
+
+    appliesToFailed: -> false
+    appliesToPending: -> true

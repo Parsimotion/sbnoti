@@ -39,3 +39,6 @@ module.exports =
 
     _getChannel: ({ app, topic, subscription }) =>
       "#{@_channelPrefix_()}/#{app}/#{topic}/#{subscription}"
+
+    appliesToFailed: -> true
+    appliesToPending: -> true
