@@ -5,6 +5,7 @@ Promise = require("bluebird")
 http = require("./services/http")
 convert = require("convert-units")
 DEAD_LETTER_SUFFIX = "/$DeadLetterQueue"
+{ Builder } = require "notification-processor"
 
 module.exports =
 
@@ -54,19 +55,26 @@ class NotificationsReader
     receiveChunk()
 
   _doProcess: (processMessage) => (message, callback) =>
-    response = try processMessage message.body, message
     _cleanInterval = -> clearInterval message.interval
     
-    if not response?.then?
-      _cleanInterval()
-      return callback("The receiver didn't return a Promise.")
+    context =
+      done: (err) -> _cleanInterval(); callback err
+      log: console
+      bindingData:
+        enqueuedTimeUtc: message.brokerProperties.EnqueuedTimeUtc
+        deliveryCount: message.brokerProperties.DeliveryCount
 
-    response
-    .then -> callback()
-    .catch (err) -> callback(err or "unknown error")
-    .finally =>
-      _cleanInterval()
-      @_notifyFinish message
+    Builder.create()
+      .fromServiceBus()
+      .fromProducteca()
+      .withListeners
+        listenTo: (observable) =>
+          observable.on "successful", @_notifySuccess
+          observable.on "unsuccessful", @_notifyError
+          observable.on "finished", @_notifyFinish
+      .withFunction ({ message, meta }) => processMessage message, meta
+      .build()
+      .process context, message.body
 
   _createSubscription: =>
     (@_doWithTopic "createSubscription")()
@@ -111,23 +119,20 @@ class NotificationsReader
 
     onError = (error) =>
       @_log "--> Error processing message: #{error}. #{messageId}"
-      @_notifyError lockedMessage, error
       (@_do "unlockMessage") lockedMessage unless @isReadingFromDeadLetter()
 
     @toProcess.push lockedMessage, (err) =>
       return onError(err) if err?
-      @_notifySuccess lockedMessage
       (@_do "deleteMessage") lockedMessage
-        .then =>
-          @_log "--> Message #{messageId} processed OK."
-        .catch (error) =>
-          @_log "--> Error deleting message: #{error}. #{messageId}"
+        .then => @_log "--> Message #{messageId} processed OK."
+        .catch (error) => @_log "--> Error deleting message: #{error}. #{messageId}"
 
   _notifyError: (message, error) => @_notify @statusObservers, message, 'error', error
 
   _notifySuccess: (message) => @_notify @statusObservers, message, 'success'
 
-  _notifyFinish: (message) => @_notify @finishObservers, message, 'finish'
+  _notifyFinish: (message) =>
+    @_notify @finishObservers, message, 'finish'
 
   _buildNotification: (message) =>
     _.merge { message }, _.pick @config, ["app","topic","subscription"]
