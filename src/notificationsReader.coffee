@@ -41,22 +41,7 @@ class NotificationsReader
         .catch => callback("no messages")
     , @config.concurrency * 2
 
-    @toProcess = async.queue (message, callback) =>
-      response = try processMessage message.body, message
-      _cleanInterval = -> clearInterval message.interval
-
-      if not response?.then?
-        _cleanInterval()
-        return callback("The receiver didn't return a Promise.")
-
-      response
-      .then -> callback()
-      .catch (err) -> callback(err or "unknown error")
-      .finally =>
-        _cleanInterval()
-        @_notifyFinish message
-
-    , @config.concurrency
+    @toProcess = async.queue @_doProcess(processMessage), @config.concurrency
 
     setInterval =>
       if @toReceive.length() is 0 and @toProcess.running() is 0
@@ -67,6 +52,21 @@ class NotificationsReader
     @toProcess.empty = receiveChunk
 
     receiveChunk()
+
+  _doProcess: (processMessage) => (message, callback) =>
+    response = try processMessage message.body, message
+    _cleanInterval = -> clearInterval message.interval
+    
+    if not response?.then?
+      _cleanInterval()
+      return callback("The receiver didn't return a Promise.")
+
+    response
+    .then -> callback()
+    .catch (err) -> callback(err or "unknown error")
+    .finally =>
+      _cleanInterval()
+      @_notifyFinish message
 
   _createSubscription: =>
     (@_doWithTopic "createSubscription")()
