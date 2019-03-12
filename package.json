@@ -5,17 +5,14 @@
     "type": "git",
     "url": "git://github.com/Parsimotion/sbnoti.git"
   },
-  "version": "3.0.9",
+  "version": "3.0.11",
   "main": "lib/index.js",
   "dependencies": {
     "async": "^1.5.2",
     "azure": "^0.10.6",
     "bluebird": "^2.9.34",
-    "coffee-script": "^1.8.0",
     "convert-units": "^1.3.1",
     "debug": "^4.1.1",
-    "grunt-contrib-clean": "^1.0.0",
-    "grunt-contrib-coffee": "^1.0.0",
     "highland": "^2.13.3",
     "highland-concurrent-flatmap": "^1.0.0",
     "lodash": "^4.13.1",
@@ -26,6 +23,9 @@
     "serialize-error": "^2.1.0"
   },
   "devDependencies": {
+    "coffee-script": "^1.8.0",
+    "grunt-contrib-clean": "^1.0.0",
+    "grunt-contrib-coffee": "^1.0.0",
     "grunt": "~0.4.4",
     "grunt-bump": "^0.3.1",
     "grunt-mocha-test": "~0.10.2",

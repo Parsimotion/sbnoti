@@ -4,6 +4,8 @@ RedisObserver = require("./redisObserver")
 module.exports =
   class DeadLetterSucceeded extends RedisObserver
 
-    success: (notification, reader) =>
-      return Promise.resolve() unless reader.isReadingFromDeadLetter()
+    success: (notification) =>
       @publish notification, success: true
+
+    appliesToFailed: -> true
+    appliesToPending: -> false

@@ -21,3 +21,6 @@ module.exports =
       "#{@_channelPrefix_()}/#{app}/#{CompanyId}/#{topic}/#{subscription}/#{ResourceId}"
 
     _channelPrefix_: -> "health-message-sb"
+
+    appliesToFailed: -> throw new Error "not implemented"
+    appliesToPending: -> throw new Error "not implemented"
