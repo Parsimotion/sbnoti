@@ -43,3 +43,4 @@ yarn.lock
 .idea
 *.sublime-workspace
 
+package-lock.json
