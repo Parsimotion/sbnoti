@@ -1,5 +1,5 @@
 _ = require("lodash")
-azure = require("azure")
+azure = require("azure-sb")
 async = require("async")
 Promise = require("bluebird")
 DidLastRetry = require("./observers/didLastRetry")

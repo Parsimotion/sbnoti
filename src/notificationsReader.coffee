@@ -1,5 +1,5 @@
 _ = require("lodash")
-azure = require("azure")
+{ Constants } = require("azure-common")
 async = require("async")
 Promise = require("bluebird")
 http = require("./services/http")
@@ -84,7 +84,7 @@ class NotificationsReader
       Promise.all @config.filters.map (filter) => @_createFilter filter
 
   _deleteDefaultFilter: =>
-    (@_doWithTopic "deleteRule") azure.Constants.ServiceBusConstants.DEFAULT_RULE_NAME
+    (@_doWithTopic "deleteRule") Constants.ServiceBusConstants.DEFAULT_RULE_NAME
       .then => @_log "Default filter removed!"
       .catch @_handleError
 
