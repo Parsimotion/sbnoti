@@ -10,7 +10,7 @@ asyncify = (fn) ->
     _(args).last() null, {}
 
 stub =
-  "azure":
+  "azure-sb":
     new class AzureMock
       constructor: ->
         @refreshSpies()
@@ -28,5 +28,5 @@ stub =
 stub["@global"] = true
 proxyquire("../../src/notificationsReader.builder", stub)
 
-module.exports = stub.azure
+module.exports = stub["azure-sb"]
 
