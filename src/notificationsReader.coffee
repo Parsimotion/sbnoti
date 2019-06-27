@@ -5,6 +5,11 @@ Promise = require("bluebird")
 http = require("./services/http")
 convert = require("convert-units")
 DEAD_LETTER_SUFFIX = "/$DeadLetterQueue"
+{ Builder } = require "notification-processor"
+debug = require("debug") "sbnoti:reader"
+
+highland = require "highland"
+require "highland-concurrent-flatmap"
 
 module.exports =
 
@@ -29,49 +34,39 @@ class NotificationsReader
   # processMessage: (parsedMessageBody, message) -> promise
   run: (processMessage) =>
     $subscription = if @isReadingFromDeadLetter() then Promise.resolve() else @_createSubscription()
-
-    $subscription.then =>
-      @_log "Listening for messages..."
-      @_buildQueueWith processMessage
-
-  _buildQueueWith: (processMessage) =>
-    @toReceive = async.queue (___, callback) =>
-      @_receive()
-        .then callback
-        .catch => callback("no messages")
-    , @config.concurrency * 2
-
-    @toProcess = async.queue (message, callback) =>
-      response = try processMessage message.body, message
-      _cleanInterval = -> clearInterval message.interval
-
-      if not response?.then?
-        _cleanInterval()
-        return callback("The receiver didn't return a Promise.")
-
-      response
-      .then -> callback()
-      .catch (err) -> callback(err or "unknown error")
-      .finally =>
-        _cleanInterval()
-        @_notifyFinish message
-
-    , @config.concurrency
-
-    setInterval =>
-      if @toReceive.length() is 0 and @toProcess.running() is 0
-        @toReceive.push 1
-    , @config.waitForMessageTime
-
-    receiveChunk = => @toReceive.push [1..@config.receiveBatchSize]
-    @toProcess.empty = receiveChunk
-
-    receiveChunk()
+    anyMessage = true
+    highland.of 1
+    .flatMap -> highland $subscription
+    .tap => debug "Listening for messages... %o", { @config }
+    .flatMap => 
+      highland (push, next) ->
+        _push = -> push(null, 1); next()
+        if anyMessage
+          _push()
+        else
+          setInterval(_push, @config.waitForMessageTime)
+    .concurrentFlatMap @config.receiveBatchSize, => highland @_receive()
+    .tap (message) -> anyMessage = message?
+    .concurrentFlatMap @config.concurrency, (message) => 
+      messageId = message.brokerProperties?.MessageId
+      highland(
+        processMessage message.body, {
+          customProperties: message.customProperties
+          bindingData: _.mapKeys(message.brokerProperties, _.camelCase)
+        }
+        .finally => clearInterval message.interval
+        .then (inspection) => (@_do "deleteMessage") message
+        .then => debug "--> Message %s processed OK.", messageId
+        .catch (err) =>
+          debug "--> Message %s processed Failed %o", err
+          (@_do "unlockMessage") message unless @isReadingFromDeadLetter()
+      )
+    .done(_.noop)
 
   _createSubscription: =>
     (@_doWithTopic "createSubscription")()
       .then =>
-        @_log "Subscription created!"
+        debug "Subscription created!"
         @_addFilters() if @config.filters?
       .catch (e) =>
         itAlreadyExists = e.cause?.code?.toString() is "409"
@@ -91,7 +86,7 @@ class NotificationsReader
   _createFilter: ({ name, expression }) =>
     ruleOptions = sqlExpressionFilter: expression
     (@_doWithTopic "createRule") name, ruleOptions
-      .then => @_log "Custom filter created!"
+      .then => debug "Custom filter created!"
       .catch @_handleError
 
   _receive: =>
@@ -101,33 +96,20 @@ class NotificationsReader
   _process: (lockedMessage) =>
     messageId = lockedMessage.brokerProperties?.MessageId
     lockedMessage.body = @_sanitizedBody lockedMessage
-    @_log "Receiving message... #{messageId}"
+    debug "Receiving message... %s", messageId
 
     renewLock = =>
-      @_log "renewLock #{messageId}"
+      debug "renewLock %s", messageId
       (@_do "renewLockForMessage")(lockedMessage)
 
-    lockedMessage.interval = setInterval renewLock, convert(30).from('s').to 'ms'
-
-    onError = (error) =>
-      @_log "--> Error processing message: #{error}. #{messageId}"
-      @_notifyError lockedMessage, error
-      (@_do "unlockMessage") lockedMessage unless @isReadingFromDeadLetter()
-
-    @toProcess.push lockedMessage, (err) =>
-      return onError(err) if err?
-      @_notifySuccess lockedMessage
-      (@_do "deleteMessage") lockedMessage
-        .then =>
-          @_log "--> Message #{messageId} processed OK."
-        .catch (error) =>
-          @_log "--> Error deleting message: #{error}. #{messageId}"
+    _.assign lockedMessage, { interval: setInterval renewLock, convert(30).from('s').to 'ms' }
 
   _notifyError: (message, error) => @_notify @statusObservers, message, 'error', error
 
   _notifySuccess: (message) => @_notify @statusObservers, message, 'success'
 
-  _notifyFinish: (message) => @_notify @finishObservers, message, 'finish'
+  _notifyFinish: (message) =>
+    @_notify @finishObservers, message, 'finish'
 
   _buildNotification: (message) =>
     _.merge { message }, _.pick @config, ["app","topic","subscription"]
@@ -148,7 +130,7 @@ class NotificationsReader
     try
       return JSON.parse clean(message.body)
     catch
-      console.log "ERROR BUILDING THE MESSAGE:\n", message.body
+      debug "ERROR BUILDING THE MESSAGE:\n", message.body
 
   _do: (funcName) =>
     @serviceBusService["#{funcName}Async"]
@@ -159,6 +141,5 @@ class NotificationsReader
     @_do funcName
       .bind @serviceBusService, @config.topic, @config.subscription + suffix
 
-  _handleError: (error) => @_log error if error?
-  _log: (info) =>
-    console.log info if @config.log
+  _handleError: (error) => debug error if error?
+  
