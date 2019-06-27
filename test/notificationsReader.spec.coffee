@@ -175,10 +175,7 @@ shouldMakeRequest = (method, done) ->
   assertRequest method, { status:200, body: todo:'bien' }, aReader, done
 
 assertAfterProcess = (done, { message, process, assertion }, aReader = reader()) ->
-  aReader._buildQueueWith process
-  aReader._process message
-  aReader.toProcess.drain = ->
-    setTimeout ->
-      assertion()
-      done()
-    , 50
+  aReader._processMessage(process) message
+  .done ->
+    assertion()
+    done()

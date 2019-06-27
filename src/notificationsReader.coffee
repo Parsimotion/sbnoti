@@ -5,7 +5,6 @@ Promise = require("bluebird")
 http = require("./services/http")
 convert = require("convert-units")
 DEAD_LETTER_SUFFIX = "/$DeadLetterQueue"
-{ Builder } = require "notification-processor"
 debug = require("debug") "sbnoti:reader"
 
 highland = require "highland"
@@ -32,36 +31,41 @@ class NotificationsReader
     @run http.process messageToOptions, method, options
   # Starts to receive notifications and calls the given function with every received message.
   # processMessage: (parsedMessageBody, message) -> promise
-  run: (processMessage) =>
+  run: (processor) =>
     $subscription = if @isReadingFromDeadLetter() then Promise.resolve() else @_createSubscription()
     anyMessage = true
     highland.of 1
     .flatMap -> highland $subscription
     .tap => debug "Listening for messages... %o", { @config }
-    .flatMap => 
-      highland (push, next) ->
+    .flatMap =>
+      highland (push, next) =>
         _push = -> push(null, 1); next()
         if anyMessage
           _push()
         else
-          setInterval(_push, @config.waitForMessageTime)
+          setTimeout(_push, @config.waitForMessageTime)
     .concurrentFlatMap @config.receiveBatchSize, => highland @_receive()
     .tap (message) -> anyMessage = message?
-    .concurrentFlatMap @config.concurrency, (message) => 
-      messageId = message.brokerProperties?.MessageId
-      highland(
-        processMessage message.body, {
-          customProperties: message.customProperties
-          bindingData: _.mapKeys(message.brokerProperties, _.camelCase)
-        }
-        .finally => clearInterval message.interval
-        .then (inspection) => (@_do "deleteMessage") message
-        .then => debug "--> Message %s processed OK.", messageId
-        .catch (err) =>
-          debug "--> Message %s processed Failed %o", err
-          (@_do "unlockMessage") message unless @isReadingFromDeadLetter()
-      )
+    .reject _.isEmpty
+    .concurrentFlatMap @config.concurrency, @_processMessage processor
     .done(_.noop)
+
+  _processMessage: (processor) => (message) => 
+    messageId = message.brokerProperties?.MessageId
+    highland(
+      processor message.body, {
+        customProperties: message.customProperties
+        bindingData: _.mapKeys(message.brokerProperties, _.camelCase)
+      }
+      .finally => clearInterval message.interval
+      .tap => @_notifySuccess message
+      .tap => (@_do "deleteMessage") message
+      .tap => debug "--> Message %s processed OK.", messageId
+      .tapCatch (err) => @_notifyError message, err
+      .tapCatch (err) => debug "--> Message %s processed Failed %o", err
+      .catch (err) =>
+        (@_do "unlockMessage") message unless @isReadingFromDeadLetter()
+    )
 
   _createSubscription: =>
     (@_doWithTopic "createSubscription")()
@@ -91,9 +95,10 @@ class NotificationsReader
 
   _receive: =>
     (@_doWithTopic "receiveSubscriptionMessage") { isPeekLock: true }
-      .spread @_process
+      .spread @_adaptToMessage
+      .catch _.noop
 
-  _process: (lockedMessage) =>
+  _adaptToMessage: (lockedMessage) =>
     messageId = lockedMessage.brokerProperties?.MessageId
     lockedMessage.body = @_sanitizedBody lockedMessage
     debug "Receiving message... %s", messageId
