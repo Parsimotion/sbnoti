@@ -43,6 +43,7 @@ class NotificationsReader
         if anyMessage
           _push()
         else
+          debug "Waiting for messages... %d ms", @config.waitForMessageTime
           setTimeout(_push, @config.waitForMessageTime)
     .concurrentFlatMap @config.receiveBatchSize, => highland @_receive()
     .tap (message) -> anyMessage = message?
