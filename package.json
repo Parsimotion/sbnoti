@@ -1,5 +1,5 @@
 {
-  "name": "sbnoti",
+  "name": "@producteca/sbnoti",
   "description": "Notifications Reader for Azure Service Bus",
   "repository": {
     "type": "git",
