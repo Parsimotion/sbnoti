@@ -142,7 +142,7 @@ describe "NotificationsReader", ->
           assertion = ->
             observer.error.notCalled.should.be.true()
             observer.success.calledOnce.should.be.true()
-          checkIfItFails readerWithStubbedObserver, {ignoredStatusCodes: [400]}, assertion, done
+          checkIfItFails readerWithStubbedObserver, { ignoredStatusCodes: [400] }, assertion, done
 
         it "should not fail if status code is < 400", (done) ->
           assertion = ->

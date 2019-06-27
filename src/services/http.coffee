@@ -7,13 +7,13 @@ module.exports =
 
     process: (messageToOptions, method, { @ignoredStatusCodes } = {}) =>
       (parsedMessageBody, message) =>
-        @_makeRequest messageToOptions(parsedMessageBody, message), method
+        @_makeRequest messageToOptions(JSON.parse(parsedMessageBody), message), method
 
     _addDefaultOptions: (opts) => _.merge json: true, opts
 
     _makeRequest: (options, method = 'post') =>
       request["#{method}Async"] @_addDefaultOptions options
-      .spread ({ statusCode, body }) =>
+      .then ({ statusCode, body }) =>
         throw new Error body if @_isErrorStatusCode statusCode
 
     _isErrorStatusCode: (code) =>
