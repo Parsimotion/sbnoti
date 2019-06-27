@@ -53,10 +53,10 @@ class NotificationsReader
   _processMessage: (processor) => (message) => 
     messageId = message.brokerProperties?.MessageId
     highland(
-      processor message.body, {
+      Promise.resolve(processor message.body, {
         customProperties: message.customProperties
         bindingData: _.mapKeys(message.brokerProperties, _.camelCase)
-      }
+      })
       .finally => clearInterval message.interval
       .tap => @_notifySuccess message
       .tap => (@_do "deleteMessage") message
@@ -95,7 +95,7 @@ class NotificationsReader
 
   _receive: =>
     (@_doWithTopic "receiveSubscriptionMessage") { isPeekLock: true }
-      .spread @_adaptToMessage
+      .then @_adaptToMessage
       .catch _.noop
 
   _adaptToMessage: (lockedMessage) =>
