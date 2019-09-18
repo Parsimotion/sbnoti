@@ -7,8 +7,7 @@ convert = require("convert-units")
 DEAD_LETTER_SUFFIX = "/$DeadLetterQueue"
 debug = require("debug") "sbnoti:reader"
 
-highland = require "highland"
-require "highland-concurrent-flatmap"
+highland = require "highland-concurrent-flatmap"
 
 module.exports =
 
