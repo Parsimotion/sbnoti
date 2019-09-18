@@ -48,6 +48,7 @@ class NotificationsReader
     .tap (message) -> anyMessage = message?
     .reject _.isEmpty
     .concurrentFlatMap @config.concurrency, @_processMessage processor
+    .errors (err, push) -> debug("Error %o", err); push null, {}
     .done(_.noop)
 
   _processMessage: (processor) => (message) => 
@@ -96,7 +97,6 @@ class NotificationsReader
   _receive: =>
     (@_doWithTopic "receiveSubscriptionMessage") { isPeekLock: true }
       .then @_adaptToMessage
-      .catch _.noop
 
   _adaptToMessage: (lockedMessage) =>
     messageId = lockedMessage.brokerProperties?.MessageId
