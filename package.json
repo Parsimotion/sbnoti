@@ -8,16 +8,12 @@
   "version": "4.0.3",
   "main": "lib/index.js",
   "dependencies": {
-    "async": "^1.5.2",
-    "azure-sb": "^0.11.0",
+    "@azure/service-bus": "^1.0.4",
     "bluebird": "^3.5.5",
     "convert-units": "^1.3.1",
     "debug": "^4.1.1",
-    "highland": "^2.13.3",
-    "highland-concurrent-flatmap": "^1.0.0",
     "lodash": "^4.13.1",
     "moment": "^2.17.1",
-    "notification-processor": "^2.4.1",
     "redis": "^2.6.5",
     "request": "^2.79.0",
     "serialize-error": "^2.1.0"

@@ -5,7 +5,7 @@ should = require("should")
 Promise = require("bluebird")
 NotificationsReaderBuilder = require("../src/notificationsReader.builder")
 nock = require("nock")
-{ retryableMessage, redis, basicConfig, deadLetterConfig, filtersConfig, getMessage } = require("../test/helpers/fixture")
+{ retryableMessage, redis, basicConfig, deadLetterConfig, getMessage } = require("../test/helpers/fixture")
 
 deadLetterReader = (config = basicConfig) =>
   new NotificationsReaderBuilder()
@@ -39,22 +39,6 @@ describe "NotificationsReader", ->
         log: false,
         receiveBatchSize: 5,
         waitForMessageTime: 3000
-
-    it "should create a subscription", ->
-      reader()._createSubscription()
-      .then =>
-        mockAzure.spies.createSubscription
-        .withArgs "un-topic","una-subscription"
-        .calledOnce.should.be.true()
-
-    it "should add filter to subscription", ->
-      reader(filtersConfig)._createSubscription()
-      .then =>
-        mockAzure.spies.deleteRule.calledOnce.should.be.true()
-        mockAzure.spies.createSubscription.calledOnce.should.be.true()
-        mockAzure.spies.createRule
-        .withArgs "un-topic","una-subscription","un-filtro", { sqlExpressionFilter: 'un_filtro eq \'True\'' }
-        .calledOnce.should.be.true()
 
     it "should build a message", ->
       aMessage = un: "mensaje"

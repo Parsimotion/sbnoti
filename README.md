@@ -12,13 +12,7 @@ reader = new SbnotiBuilder()
   topic: "the topic name"
   subscription: "the subscription name"
 #All settigns below are optional. The values are the defaults.
-.withFilters [ 
-    { name: "theNameOfTheCustomFilter", expression: "created = True" }
-  ]
-.withLogging true # or simply .withLogging()
 .withConcurrency 25
-.withReceiveBatchSize 5
-.withWaitForMessageTime 3000
 # new health notifiying option:
 .withHealth
   redis: 

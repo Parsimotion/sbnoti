@@ -2,7 +2,6 @@ _ = require("lodash")
 
 basicConfig = { subscription: "una-subscription", topic: "un-topic", connectionString: "un-connection-string" }
 deadLetterConfig = _.merge deadLetter: true, basicConfig
-filtersConfig = _.merge filters: [{name: "un-filtro", expression: "un_filtro eq 'True'"}], basicConfig
 redis =
   host: "127.0.0.1"
   port: "1234"
@@ -31,7 +30,6 @@ retryableNotification =_.merge {}, notification,{ message: retryableMessage }
 module.exports = {
   basicConfig
   deadLetterConfig
-  filtersConfig
   retryableMessage
   redis
   notification
