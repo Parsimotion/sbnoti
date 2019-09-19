@@ -1,7 +1,10 @@
 mockAzure = require("../test/helpers/mockedAzure")
 ObserverStub =require("../test/helpers/observerStub")
+
 _ = require("lodash")
 should = require("should")
+require "should-sinon"
+
 Promise = require("bluebird")
 NotificationsReaderBuilder = require("../src/notificationsReader.builder")
 nock = require("nock")
@@ -32,7 +35,7 @@ describe "NotificationsReader", ->
     it "should have correct defaults", ->
       reader().config.should.eql
         subscription: "una-subscription"
-        connectionString: "un-connection-string"
+        connectionString: "Endpoint=sb://hostname.servicebus.windows.net/;SharedAccessKeyName=sakName;SharedAccessKey=sak"
         topic: "un-topic"
         concurrency: 25,
         deadLetter: false,
@@ -42,40 +45,31 @@ describe "NotificationsReader", ->
 
     it "should build a message", ->
       aMessage = un: "mensaje"
-      reader()._sanitizedBody body: JSON.stringify aMessage
+      reader()._sanitizedBody JSON.stringify aMessage
       .should.eql aMessage
 
     it "should return undefined if message is not valid json", ->
-      should.not.exists reader()._sanitizedBody body: "esto no un json"
+      should.throws -> reader()._sanitizedBody "esto no un json"
 
     it "should delete message if it finishes ok", (done) ->
       assertAfterProcess done, {
         message
         process: Promise.resolve
-        assertion: ->
-          mockAzure.spies.deleteMessage
-          .withArgs message
-          .calledOnce.should.be.true()
+        assertion: -> message.complete.should.be.calledOnce()
       }
 
     it "should unlock message if it finishes with errors when it isn't dead letter", (done) ->
       assertAfterProcess done, {
         message
         process: Promise.reject
-        assertion: ->
-          mockAzure.spies.unlockMessage
-          .withArgs message
-          .calledOnce.should.be.true()
+        assertion: -> message.abandon.should.be.calledOnce()
       }
 
     it "should not unlock message if it finishes with errors when it is dead letter", (done)->
       assertAfterProcess done, {
         message
         process: Promise.reject
-        assertion: ->
-
-          mockAzure.spies.unlockMessage
-          .called.should.be.false()
+        assertion: -> message.abandon.should.be.not.called()
       }, deadLetterReader()
 
     describe "Observers", ->
@@ -159,7 +153,8 @@ shouldMakeRequest = (method, done) ->
   assertRequest method, { status:200, body: todo:'bien' }, aReader, done
 
 assertAfterProcess = (done, { message, process, assertion }, aReader = reader()) ->
-  aReader._processMessage(process) message
-  .done ->
+  aReader.onMessage(process) message
+  .reflect()
+  .then ->
     assertion()
     done()

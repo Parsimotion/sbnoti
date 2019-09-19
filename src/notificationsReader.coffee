@@ -43,14 +43,14 @@ class NotificationsReader
     .tap => brokeredMessage.complete()
     .tap => debug "Message %s processed OK.", context.bindingData.messageId
     .tapCatch (err) => @_notifyError message, err
-    .tapCatch (err) => debug "Message %s processed Failed %o", context.bindingData.messageId, err
+    .tapCatch (err) => debug "Message %s processed with errors %o", context.bindingData.messageId, err
     .tapCatch => 
       unless @isReadingFromDeadLetter()
         debug "Abandoning message %s", context.bindingData.messageId
         brokeredMessage.abandon()
     .finally => @_notifyFinish message
 
-  onError: (err) => debug "Message %s processed Failed %o", context.bindingData.messageId, err
+  onError: (err) => debug "Message %s processed with errors %o", context.bindingData.messageId, err
 
   notificationMessage: (brokeredMessage) =>
     sanitizedMessage = 

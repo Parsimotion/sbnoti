@@ -27,7 +27,7 @@ describe "Delay observer", ->
       .notCalled.should.be.true()
 
   it "should get delay in milliseconds", ->
-    enqueuedTime = moment new Date notification.message.brokerProperties.EnqueuedTimeUtc
+    enqueuedTime = moment new Date notification.message.enqueuedTimeUtc
     now = enqueuedTime.add 100, 'ms'
     delay = observer._millisecondsDelay notification.message, now.toDate()
     delay.should.eql 100

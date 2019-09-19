@@ -1,6 +1,7 @@
 _ = require("lodash")
+sinon = require("sinon")
 
-basicConfig = { subscription: "una-subscription", topic: "un-topic", connectionString: "un-connection-string" }
+basicConfig = { subscription: "una-subscription", topic: "un-topic", connectionString: "Endpoint=sb://hostname.servicebus.windows.net/;SharedAccessKeyName=sakName;SharedAccessKey=sak" }
 deadLetterConfig = _.merge deadLetter: true, basicConfig
 redis =
   host: "127.0.0.1"
@@ -10,18 +11,16 @@ redis =
 
 message =
   body: JSON.stringify { un: "json", CompanyId: 123, ResourceId: 456 }
-  brokerProperties:
-    MessageId: "el-message-id"
-    DeliveryCount: 11
-    EnqueuedTimeUtc: "Sat, 05 Nov 2016 16:44:43 GMT"
+  messageId: "el-message-id"
+  deliveryCount: 11
+  enqueuedTimeUtc: "Sat, 05 Nov 2016 16:44:43 GMT"
 
 messageWithParsedBody = _.update _.clone(message), "body", JSON.parse
 
 retryableMessage = _(_.clone(message))
   .assign
-      brokerProperties:
-        MessageId: "otro-message-id"
-        DeliveryCount: 1
+    messageId: "otro-message-id"
+    deliveryCount: 1
   .value()
 
 notification =_.omit _.merge {app: 'una-app'}, basicConfig, { message: messageWithParsedBody }, "connectionString"
@@ -34,5 +33,9 @@ module.exports = {
   redis
   notification
   retryableNotification
-  getMessage: -> _.clone message
+  getMessage: -> 
+    _.merge _.clone(message), {
+      abandon: sinon.stub().resolves("ok")
+      complete: sinon.stub().resolves("ok")
+    }
 }
