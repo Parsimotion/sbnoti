@@ -1,11 +1,14 @@
 mockAzure = require("../test/helpers/mockedAzure")
 ObserverStub =require("../test/helpers/observerStub")
+
 _ = require("lodash")
 should = require("should")
+require "should-sinon"
+
 Promise = require("bluebird")
 NotificationsReaderBuilder = require("../src/notificationsReader.builder")
 nock = require("nock")
-{ retryableMessage, redis, basicConfig, deadLetterConfig, filtersConfig, getMessage } = require("../test/helpers/fixture")
+{ retryableMessage, redis, basicConfig, deadLetterConfig, getMessage } = require("../test/helpers/fixture")
 
 deadLetterReader = (config = basicConfig) =>
   new NotificationsReaderBuilder()
@@ -32,7 +35,7 @@ describe "NotificationsReader", ->
     it "should have correct defaults", ->
       reader().config.should.eql
         subscription: "una-subscription"
-        connectionString: "un-connection-string"
+        connectionString: "Endpoint=sb://hostname.servicebus.windows.net/;SharedAccessKeyName=sakName;SharedAccessKey=sak"
         topic: "un-topic"
         concurrency: 25,
         deadLetter: false,
@@ -40,58 +43,33 @@ describe "NotificationsReader", ->
         receiveBatchSize: 5,
         waitForMessageTime: 3000
 
-    it "should create a subscription", ->
-      reader()._createSubscription()
-      .then =>
-        mockAzure.spies.createSubscription
-        .withArgs "un-topic","una-subscription"
-        .calledOnce.should.be.true()
-
-    it "should add filter to subscription", ->
-      reader(filtersConfig)._createSubscription()
-      .then =>
-        mockAzure.spies.deleteRule.calledOnce.should.be.true()
-        mockAzure.spies.createSubscription.calledOnce.should.be.true()
-        mockAzure.spies.createRule
-        .withArgs "un-topic","una-subscription","un-filtro", { sqlExpressionFilter: 'un_filtro eq \'True\'' }
-        .calledOnce.should.be.true()
-
     it "should build a message", ->
       aMessage = un: "mensaje"
-      reader()._sanitizedBody body: JSON.stringify aMessage
+      reader()._sanitizedBody JSON.stringify aMessage
       .should.eql aMessage
 
     it "should return undefined if message is not valid json", ->
-      should.not.exists reader()._sanitizedBody body: "esto no un json"
+      should.throws -> reader()._sanitizedBody "esto no un json"
 
     it "should delete message if it finishes ok", (done) ->
       assertAfterProcess done, {
         message
         process: Promise.resolve
-        assertion: ->
-          mockAzure.spies.deleteMessage
-          .withArgs message
-          .calledOnce.should.be.true()
+        assertion: -> message.complete.should.be.calledOnce()
       }
 
     it "should unlock message if it finishes with errors when it isn't dead letter", (done) ->
       assertAfterProcess done, {
         message
         process: Promise.reject
-        assertion: ->
-          mockAzure.spies.unlockMessage
-          .withArgs message
-          .calledOnce.should.be.true()
+        assertion: -> message.abandon.should.be.calledOnce()
       }
 
     it "should not unlock message if it finishes with errors when it is dead letter", (done)->
       assertAfterProcess done, {
         message
         process: Promise.reject
-        assertion: ->
-
-          mockAzure.spies.unlockMessage
-          .called.should.be.false()
+        assertion: -> message.abandon.should.be.not.called()
       }, deadLetterReader()
 
     describe "Observers", ->
@@ -175,7 +153,8 @@ shouldMakeRequest = (method, done) ->
   assertRequest method, { status:200, body: todo:'bien' }, aReader, done
 
 assertAfterProcess = (done, { message, process, assertion }, aReader = reader()) ->
-  aReader._processMessage(process) message
-  .done ->
+  aReader.onMessage(process) message
+  .reflect()
+  .then ->
     assertion()
     done()

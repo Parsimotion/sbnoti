@@ -16,7 +16,7 @@ module.exports =
 
     _buildValue_: (value, notification) -> JSON.stringify value
 
-    _getChannel: ({ message: { brokerProperties: { MessageId }, body }, app, topic, subscription }) =>
+    _getChannel: ({ message: { messageId, body }, app, topic, subscription }) =>
       { CompanyId, ResourceId } = body
       "#{@_channelPrefix_()}/#{app}/#{CompanyId}/#{topic}/#{subscription}/#{ResourceId}"
 

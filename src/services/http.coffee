@@ -7,7 +7,8 @@ module.exports =
 
     process: (messageToOptions, method, { @ignoredStatusCodes } = {}) =>
       (parsedMessageBody, message) =>
-        @_makeRequest messageToOptions(JSON.parse(parsedMessageBody), message), method
+        parsedMessageBody = JSON.parse parsedMessageBody if _.isString parsedMessageBody
+        @_makeRequest messageToOptions(parsedMessageBody, message), method
 
     _addDefaultOptions: (opts) => _.merge json: true, opts
 

@@ -1,13 +1,10 @@
 _ = require("lodash")
-{ Constants } = require("azure-common")
-async = require("async")
+{ ServiceBusClient, ReceiveMode, delay } = require("@azure/service-bus")
+
 Promise = require("bluebird")
 http = require("./services/http")
-convert = require("convert-units")
 DEAD_LETTER_SUFFIX = "/$DeadLetterQueue"
 debug = require("debug") "sbnoti:reader"
-
-highland = require "highland-concurrent-flatmap"
 
 module.exports =
 
@@ -22,99 +19,61 @@ class NotificationsReader
 
   #Gets the max delivery count of a subscription
   getMaxDeliveryCount: =>
-    (@_doWithTopic "getSubscription")()
-    .then ([subscription]) => subscription?.MaxDeliveryCount or 10
+    throw new "not implemented"
 
   # Starts to receive notifications and makes given http request with every received message.
   runAndRequest: (messageToOptions, method, options) =>
     @run http.process messageToOptions, method, options
+  
   # Starts to receive notifications and calls the given function with every received message.
   # processMessage: (parsedMessageBody, message) -> promise
   run: (processor) =>
-    $subscription = if @isReadingFromDeadLetter() then Promise.resolve() else @_createSubscription()
-    anyMessage = true
-    highland.of 1
-    .flatMap -> highland $subscription
-    .tap => debug "Listening for messages... %o", { @config }
-    .flatMap =>
-      highland (push, next) =>
-        _push = -> push(null, 1); next()
-        if anyMessage
-          _push()
-        else
-          debug "Waiting for messages... %d ms", @config.waitForMessageTime
-          setTimeout(_push, @config.waitForMessageTime)
-    .concurrentFlatMap @config.receiveBatchSize, => highland @_receive()
-    .tap (message) -> anyMessage = message?
-    .reject _.isEmpty
-    .concurrentFlatMap @config.concurrency, @_processMessage processor
-    .errors (err, push) -> debug("Error %o", err); push null, {}
-    .done(_.noop)
+    client = @_createSubscriptionClient().createReceiver(ReceiveMode.peekLock)
+    client.registerMessageHandler(@onMessage(processor), @onError, {
+      autoComplete: false
+      maxConcurrentCalls: @config.concurrency
+    })
 
-  _processMessage: (processor) => (message) => 
-    messageId = message.brokerProperties?.MessageId
-    highland(
-      Promise.resolve(processor message.body, {
-        customProperties: message.customProperties
-        bindingData: _.mapKeys(message.brokerProperties, _.camelCase)
-      })
-      .finally => clearInterval message.interval
-      .tap => @_notifySuccess message
-      .tap => (@_do "deleteMessage") message
-      .tap => debug "--> Message %s processed OK.", messageId
-      .tapCatch (err) => @_notifyError message, err
-      .tapCatch (err) => debug "--> Message %s processed Failed %o", err
-      .catch (err) =>
-        (@_do "unlockMessage") message unless @isReadingFromDeadLetter()
-    )
+  onMessage: (processor) -> (brokeredMessage) =>
+    { message, context } = @notificationMessage brokeredMessage
 
-  _createSubscription: =>
-    (@_doWithTopic "createSubscription")()
-      .then =>
-        debug "Subscription created!"
-        @_addFilters() if @config.filters?
-      .catch (e) =>
-        itAlreadyExists = e.cause?.code?.toString() is "409"
+    debug "Received %s message from %s/%s", context.bindingData.messageId, @config.topic, @_subscriptionName()
+    Promise.resolve(processor(message.body, context))
+    .tap => @_notifySuccess message
+    .tap => brokeredMessage.complete()
+    .tap => debug "Message %s processed OK.", context.bindingData.messageId
+    .tapCatch (err) => @_notifyError message, err
+    .tapCatch (err) => debug "Message %s processed with errors %o", context.bindingData.messageId, err
+    .tapCatch => 
+      unless @isReadingFromDeadLetter()
+        debug "Abandoning message %s", context.bindingData.messageId
+        brokeredMessage.abandon()
+    .finally => @_notifyFinish message
 
-        if itAlreadyExists then return
-        else throw e
+  onError: (err) => debug "An error has ocurred %o", err
 
-  _addFilters: =>
-    @_deleteDefaultFilter().then =>
-      Promise.all @config.filters.map (filter) => @_createFilter filter
+  notificationMessage: (brokeredMessage) =>
+    sanitizedMessage = 
+      _(brokeredMessage)
+      .omitBy((value, key) => _.startsWith(key, "_"))
+      .omit("delivery")
+      .update("body", @_sanitizedBody)
+      .value()
 
-  _deleteDefaultFilter: =>
-    (@_doWithTopic "deleteRule") Constants.ServiceBusConstants.DEFAULT_RULE_NAME
-      .then => @_log "Default filter removed!"
-      .catch @_handleError
+    {
+      message: sanitizedMessage
+      context: {
+        customProperties: sanitizedMessage.userProperties
+        bindingData: _.omit(sanitizedMessage, "userProperties", "body")
+      }
+    }
 
-  _createFilter: ({ name, expression }) =>
-    ruleOptions = sqlExpressionFilter: expression
-    (@_doWithTopic "createRule") name, ruleOptions
-      .then => debug "Custom filter created!"
-      .catch @_handleError
+  _createSubscriptionClient: =>
+    return @serviceBusService.createSubscriptionClient @config.topic, @_subscriptionName()
 
-  _receive: =>
-    (@_doWithTopic "receiveSubscriptionMessage") { isPeekLock: true }
-      .then @_adaptToMessage
-
-  _adaptToMessage: (lockedMessage) =>
-    messageId = lockedMessage.brokerProperties?.MessageId
-    lockedMessage.body = @_sanitizedBody lockedMessage
-    debug "Receiving message... %s", messageId
-
-    renewLock = =>
-      debug "renewLock %s", messageId
-      (@_do "renewLockForMessage")(lockedMessage)
-
-    _.assign lockedMessage, { interval: setInterval renewLock, convert(30).from('s').to 'ms' }
-
-  _notifyError: (message, error) => @_notify @statusObservers, message, 'error', error
-
-  _notifySuccess: (message) => @_notify @statusObservers, message, 'success'
-
-  _notifyFinish: (message) =>
-    @_notify @finishObservers, message, 'finish'
+  _notifyError: (message, error) => @_notify @statusObservers, message, "error", error
+  _notifySuccess: (message) => @_notify @statusObservers, message, "success"
+  _notifyFinish: (message) => @_notify @finishObservers, message, "finish"
 
   _buildNotification: (message) =>
     _.merge { message }, _.pick @config, ["app","topic","subscription"]
@@ -123,28 +82,20 @@ class NotificationsReader
     notification = @_buildNotification message
     observers.forEach (observer) => observer[event] notification, @, opts
 
-  _sanitizedBody: (message) ->
-    clean = (body) =>
-      # The messages come with shit before the "{" that breaks JSON.parse =|
-      # Example: @strin3http://schemas.microsoft.com/2003/10/Serialization/p{"Changes":[{"Key":
-      # ... (rest of the json) ... *a bunch of non printable characters*
-      body
-        .substring body.indexOf('{"')
-        .replace /[^\x20-\x7E]+/g, ""
+  _sanitizedBody: (body) ->
+    # The messages come with shit before the "{" that breaks JSON.parse =|
+    # Example: @strin3http://schemas.microsoft.com/2003/10/Serialization/p{"Changes":[{"Key":
+    # ... (rest of the json) ... *a bunch of non printable characters*
+    cleanedBody = body
+      .toString()
+      .substring body.indexOf('{"')
+      .replace /[^\x20-\x7E]+/g, ""
 
-    try
-      return JSON.parse clean(message.body)
-    catch
-      debug "ERROR BUILDING THE MESSAGE:\n", message.body
+    JSON.parse cleanedBody
 
-  _do: (funcName) =>
-    @serviceBusService["#{funcName}Async"]
-      .bind @serviceBusService
-
-  _doWithTopic: (funcName) =>
+  _subscriptionName: =>
     suffix = if @isReadingFromDeadLetter() then DEAD_LETTER_SUFFIX else ""
-    @_do funcName
-      .bind @serviceBusService, @config.topic, @config.subscription + suffix
+    @config.subscription + suffix
 
   _handleError: (error) => debug error if error?
   

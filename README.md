@@ -12,13 +12,7 @@ reader = new SbnotiBuilder()
   topic: "the topic name"
   subscription: "the subscription name"
 #All settigns below are optional. The values are the defaults.
-.withFilters [ 
-    { name: "theNameOfTheCustomFilter", expression: "created = True" }
-  ]
-.withLogging true # or simply .withLogging()
 .withConcurrency 25
-.withReceiveBatchSize 5
-.withWaitForMessageTime 3000
 # new health notifiying option:
 .withHealth
   redis: 
@@ -88,3 +82,16 @@ method = 'post',  #'get','delete','update'
 reader.runAndRequest messageToOptions, method, ignoredStatusCodes: [409]
 
 ```
+
+### Migrations
+
+#### 4.x -> 5.x
+
+##### Removed methods
+
+* builder#withFilters
+
+* builder#withLogging. You should use environment variable DEBUG=sbnoti:*
+
+* builder#withReceiveBatchSize and builder#withWaitForMessageTime. Service bus SDK uses AMQP [azure-servicebus.receiver.registerMessageHandler](https://docs.microsoft.com/en-us/javascript/api/@azure/service-bus/receiver?view=azure-node-latest#registermessagehandler-onmessage--onerror--messagehandleroptions-)
+

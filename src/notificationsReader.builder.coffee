@@ -1,6 +1,6 @@
 _ = require("lodash")
-azure = require("azure-sb")
-async = require("async")
+{ ServiceBusClient } = require("@azure/service-bus")
+
 Promise = require("bluebird")
 DidLastRetry = require("./observers/didLastRetry")
 DeadLetterSucceeded = require("./observers/deadLetterSucceeded")
@@ -42,7 +42,7 @@ class NotificationsReaderBuilder
     __addObservers 'finishObservers'
 
   _getServiceBus: =>
-    Promise.promisifyAll azure.createServiceBusService @config.connectionString
+    ServiceBusClient.createFromConnectionString @config.connectionString
 
   build: =>
     @_validateRequired()
@@ -71,11 +71,8 @@ class NotificationsReaderBuilder
     @_assignAndReturnSelf statusObservers: _.castArray observers
   withServiceBus: (serviceBusConfig) =>
     @_assignAndReturnSelf serviceBusConfig
-  withFilters: (filters) =>
-    @_assignAndReturnSelf { filters }
-  withLogging: (log = true) =>
-    @_assignAndReturnSelf { log }
-  fromDeadLetter: => @activeFor failed: true
+
+  fromDeadLetter: => @activeFor { failed: true }
   withConcurrency: (concurrency) =>
     @_assignAndReturnSelf { concurrency }
   withReceiveBatchSize: (receiveBatchSize) =>

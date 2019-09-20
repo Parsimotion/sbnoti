@@ -23,8 +23,8 @@ module.exports =
     _messageDelay: (message) =>
       @_delayByMilliseconds @_millisecondsDelay message, new Date()
 
-    _millisecondsDelay: ({ brokerProperties: { EnqueuedTimeUtc } }, now) =>
-      enqueuedTime = moment.utc new Date EnqueuedTimeUtc
+    _millisecondsDelay: ({ enqueuedTimeUtc }, now) =>
+      enqueuedTime = moment.utc new Date enqueuedTimeUtc
       moment.utc(now).diff enqueuedTime
 
     _delayChanged: (newDelay) => !_.isEqual newDelay, @currentDelay
