@@ -82,3 +82,16 @@ method = 'post',  #'get','delete','update'
 reader.runAndRequest messageToOptions, method, ignoredStatusCodes: [409]
 
 ```
+
+### Migrations
+
+#### 4.x -> 5.x
+
+##### Removed methods
+
+* builder#withFilters
+
+* builder#withLogging. You should use environment variable DEBUG=sbnoti:*
+
+* builder#withReceiveBatchSize and builder#withWaitForMessageTime. Service bus SDK uses AMQP [azure-servicebus.receiver.registerMessageHandler](https://docs.microsoft.com/en-us/javascript/api/@azure/service-bus/receiver?view=azure-node-latest#registermessagehandler-onmessage--onerror--messagehandleroptions-)
+
