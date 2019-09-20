@@ -50,7 +50,7 @@ class NotificationsReader
         brokeredMessage.abandon()
     .finally => @_notifyFinish message
 
-  onError: (err) => debug "Message %s processed with errors %o", context.bindingData.messageId, err
+  onError: (err) => debug "An error has ocurred %o", err
 
   notificationMessage: (brokeredMessage) =>
     sanitizedMessage = 
