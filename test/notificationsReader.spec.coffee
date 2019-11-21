@@ -1,5 +1,6 @@
 mockAzure = require("../test/helpers/mockedAzure")
 ObserverStub =require("../test/helpers/observerStub")
+{ Buffer } = require("buffer")
 
 _ = require("lodash")
 should = require("should")
@@ -45,11 +46,11 @@ describe "NotificationsReader", ->
 
     it "should build a message", ->
       aMessage = un: "mensaje"
-      reader()._sanitizedBody JSON.stringify aMessage
+      reader()._sanitizedBody Buffer.from JSON.stringify aMessage
       .should.eql aMessage
 
-    it "should return undefined if message is not valid json", ->
-      should.throws -> reader()._sanitizedBody "esto no un json"
+    it "should failed if message is not valid json", ->
+      should.throws -> reader()._sanitizedBody Buffer.from "esto no un json"
 
     it "should delete message if it finishes ok", (done) ->
       assertAfterProcess done, {

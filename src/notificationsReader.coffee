@@ -5,6 +5,7 @@ Promise = require("bluebird")
 http = require("./services/http")
 DEAD_LETTER_SUFFIX = "/$DeadLetterQueue"
 debug = require("debug") "sbnoti:reader"
+{ Buffer } = require("buffer")
 
 module.exports =
 
@@ -86,6 +87,8 @@ class NotificationsReader
     # The messages come with shit before the "{" that breaks JSON.parse =|
     # Example: @strin3http://schemas.microsoft.com/2003/10/Serialization/p{"Changes":[{"Key":
     # ... (rest of the json) ... *a bunch of non printable characters*
+    return body unless body instanceof Buffer
+
     cleanedBody = body
       .toString()
       .substring body.indexOf('{"')

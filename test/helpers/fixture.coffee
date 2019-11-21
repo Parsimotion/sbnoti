@@ -1,5 +1,6 @@
 _ = require("lodash")
 sinon = require("sinon")
+{ Buffer } = require("buffer")
 
 basicConfig = { subscription: "una-subscription", topic: "un-topic", connectionString: "Endpoint=sb://hostname.servicebus.windows.net/;SharedAccessKeyName=sakName;SharedAccessKey=sak" }
 deadLetterConfig = _.merge deadLetter: true, basicConfig
@@ -10,7 +11,7 @@ redis =
   auth: "unaCadenaDeAuth",
 
 message =
-  body: JSON.stringify { un: "json", CompanyId: 123, ResourceId: 456 }
+  body: Buffer.from JSON.stringify { un: "json", CompanyId: 123, ResourceId: 456 }
   messageId: "el-message-id"
   deliveryCount: 11
   enqueuedTimeUtc: "Sat, 05 Nov 2016 16:44:43 GMT"
