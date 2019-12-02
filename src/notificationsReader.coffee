@@ -87,7 +87,7 @@ class NotificationsReader
     # The messages come with shit before the "{" that breaks JSON.parse =|
     # Example: @strin3http://schemas.microsoft.com/2003/10/Serialization/p{"Changes":[{"Key":
     # ... (rest of the json) ... *a bunch of non printable characters*
-    return body unless (body instanceof Buffer or body instanceof String)
+    return body unless (body instanceof Buffer or _.isString(body))
 
     cleanedBody = body
       .toString()
