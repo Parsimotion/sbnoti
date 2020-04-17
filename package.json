@@ -15,9 +15,7 @@
     "moment": "^2.17.1",
     "redis": "^2.6.5",
     "request": "^2.79.0",
-    "serialize-error": "^2.1.0",
-    "should-sinon": "0.0.6",
-    "sinon": "^7.4.2"
+    "serialize-error": "^2.1.0"
   },
   "devDependencies": {
     "coffee-script": "^1.8.0",
@@ -30,7 +28,9 @@
     "nock": "^9.0.3",
     "proxyquire": "^1.7.10",
     "should": "^11.1.2",
-    "sinon-chai": "^2.5.0"
+    "sinon": "^7.4.2",
+    "sinon-chai": "^2.5.0",
+    "should-sinon": "0.0.6"
   },
   "peerDependencies": {
     "@azure/service-bus": "1.x"
