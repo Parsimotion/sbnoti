@@ -33,6 +33,8 @@ describe "NotificationsReaderBuilder", ->
         receiveBatchSize: 5,
         log: false,
         deadLetter: false
+        apm:
+          active: true
 
     it "should build a notification reader deadLetter", ->
       sbnotis = builder

@@ -43,6 +43,8 @@ describe "NotificationsReader", ->
         log: false,
         receiveBatchSize: 5,
         waitForMessageTime: 3000
+        apm:
+          active: true
 
     it "should build a message", ->
       aMessage = un: "mensaje"
