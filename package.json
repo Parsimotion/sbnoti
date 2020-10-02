@@ -18,6 +18,7 @@
     "serialize-error": "^2.1.0"
   },
   "devDependencies": {
+    "@azure/service-bus": "^1.1.10",
     "coffee-script": "^1.8.0",
     "grunt": "~1.0.4",
     "grunt-bump": "^0.3.1",
@@ -28,12 +29,13 @@
     "nock": "^9.0.3",
     "proxyquire": "^1.7.10",
     "should": "^11.1.2",
+    "should-sinon": "0.0.6",
     "sinon": "^7.4.2",
-    "sinon-chai": "^2.5.0",
-    "should-sinon": "0.0.6"
+    "sinon-chai": "^2.5.0"
   },
   "peerDependencies": {
-    "@azure/service-bus": "1.x"
+    "@azure/service-bus": "1.x",
+    "newrelic": "6.x"
   },
   "engines": {
     "node": ">=0.10.0"

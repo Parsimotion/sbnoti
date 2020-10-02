@@ -20,6 +20,8 @@ class NotificationsReaderBuilder
       waitForMessageTime: 3000
       receiveBatchSize: 5
       log: false
+      apm:
+        active: true
     @activeReaders = pending: true
 
   _getReader: => new CompositeReader @_getSbnotis()
@@ -33,6 +35,7 @@ class NotificationsReaderBuilder
 
   _getSbnoti: (deadLetter) =>
     reader = new NotificationsReader _.merge {}, @config, { deadLetter }
+
     _.assign reader, serviceBusService: @_getServiceBus()
     __addObservers = (key) =>
       observers = _.filter (@config[key] or []), (observer) ->
@@ -64,6 +67,9 @@ class NotificationsReaderBuilder
     catch e
       throw e if strict
     @
+
+  withAPM: (apm) =>
+    @_assignAndReturnSelf { apm }
 
   withFinishObservers: (observers) =>
     @_assignAndReturnSelf finishObservers: _.castArray observers
