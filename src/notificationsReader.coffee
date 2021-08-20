@@ -101,8 +101,8 @@ class NotificationsReader
     # ... (rest of the json) ... *a bunch of non printable characters*
     return body unless (body instanceof Buffer or _.isString(body))
 
+    body = body.toString()
     cleanedBody = body
-      .toString()
       .substring body.indexOf('{"')
       .replace /[^\x20-\x7E]+/g, ""
 
@@ -113,4 +113,3 @@ class NotificationsReader
     @config.subscription + suffix
 
   _handleError: (error) => debug error if error?
-  
