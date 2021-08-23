@@ -2,7 +2,7 @@ _ = require("lodash")
 sinon = require("sinon")
 { Buffer } = require("buffer")
 
-basicConfig = { subscription: "una-subscription", topic: "un-topic", connectionString: "Endpoint=sb://hostname.servicebus.windows.net/;SharedAccessKeyName=sakName;SharedAccessKey=sak" }
+basicConfig = { subscription: "una-subscription", topic: "un-topic", connectionString: "Endpoint=sb://hostname.servicebus.windows.net/;SharedAccessKeyName=sakName;SharedAccessKey=sak", apm: { active: no } }
 deadLetterConfig = _.merge deadLetter: true, basicConfig
 redis =
   host: "127.0.0.1"
@@ -34,7 +34,7 @@ module.exports = {
   redis
   notification
   retryableNotification
-  getMessage: -> 
+  getMessage: ->
     _.merge _.clone(message), {
       abandon: sinon.stub().resolves("ok")
       complete: sinon.stub().resolves("ok")

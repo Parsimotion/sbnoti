@@ -20,7 +20,7 @@ describe "NotificationsReaderBuilder", ->
   describe "with basic configuration", ->
 
     beforeEach ->
-      builder.withServiceBus basicConfig
+      builder.withServiceBus _.omit basicConfig, "apm"
 
     it "should build a notification reader with proper config", ->
       builder.build()._sbnotis[0]
@@ -33,8 +33,7 @@ describe "NotificationsReaderBuilder", ->
         receiveBatchSize: 5,
         log: false,
         deadLetter: false
-        apm:
-          active: true
+        apm: active: yes
 
     it "should build a notification reader deadLetter", ->
       sbnotis = builder

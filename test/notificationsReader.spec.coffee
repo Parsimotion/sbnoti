@@ -4,6 +4,7 @@ ObserverStub =require("../test/helpers/observerStub")
 
 _ = require("lodash")
 should = require("should")
+sinon = require "sinon"
 require "should-sinon"
 
 Promise = require("bluebird")
@@ -43,8 +44,7 @@ describe "NotificationsReader", ->
         log: false,
         receiveBatchSize: 5,
         waitForMessageTime: 3000
-        apm:
-          active: true
+        apm: active: no
 
     it "should build a message", ->
       aMessage = un: "mensaje"
@@ -58,21 +58,23 @@ describe "NotificationsReader", ->
       assertAfterProcess done, {
         message
         process: Promise.resolve
-        assertion: -> message.complete.should.be.calledOnce()
+        assertion: (receiver) ->
+          receiver.completeMessage.should.be.calledOnce()
       }
 
     it "should unlock message if it finishes with errors when it isn't dead letter", (done) ->
       assertAfterProcess done, {
         message
         process: Promise.reject
-        assertion: -> message.abandon.should.be.calledOnce()
+        assertion: (receiver) ->
+          receiver.abandonMessage.should.be.calledOnce()
       }
 
     it "should not unlock message if it finishes with errors when it is dead letter", (done)->
       assertAfterProcess done, {
         message
         process: Promise.reject
-        assertion: -> message.abandon.should.be.not.called()
+        assertion: (receiver) -> receiver.abandonMessage.should.be.not.called()
       }, deadLetterReader()
 
     describe "Observers", ->
@@ -156,8 +158,12 @@ shouldMakeRequest = (method, done) ->
   assertRequest method, { status:200, body: todo:'bien' }, aReader, done
 
 assertAfterProcess = (done, { message, process, assertion }, aReader = reader()) ->
-  aReader.onMessage(process) message
+  receiver =
+    completeMessage: sinon.spy()
+    abandonMessage: sinon.spy()
+
+  aReader.onMessage(receiver, process) message
   .reflect()
   .then ->
-    assertion()
+    assertion receiver
     done()

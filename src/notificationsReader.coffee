@@ -31,14 +31,18 @@ class NotificationsReader
   # Starts to receive notifications and calls the given function with every received message.
   # processMessage: (parsedMessageBody, message) -> promise
   run: (processor) =>
-    client = @_createSubscriptionClient().createReceiver(ReceiveMode.peekLock)
-    client.registerMessageHandler(@onMessage(processor), @onError, {
+    receiver = @_createSubscriptionClient().createReceiver(ReceiveMode.peekLock)
+
+    receiver.subscribe({
+      processMessage: @onMessage(receiver, processor)
+      processError: @onError
+    }, {
       autoComplete: false
       maxConcurrentCalls: @config.concurrency
     })
 
   _decorateWithAPM: (operation) =>
-    _promisifyOperation = Promise.method(operation)
+    _promisifyOperation = Promise.method operation
     return _promisifyOperation() unless @config.apm.active
 
     transactionName = _.compact([@config.topic, @_subscriptionName(), folderScript()]).join "-"
@@ -46,21 +50,21 @@ class NotificationsReader
       _promisifyOperation()
       .tapCatch (err) -> newrelic().noticeError err
 
-  onMessage: (processor) -> (brokeredMessage) =>
+  onMessage: (receiver, processor) -> (brokeredMessage) =>
     { message, context } = @notificationMessage brokeredMessage
 
     debug "Received %s message from %s/%s", context.bindingData.messageId, @config.topic, @_subscriptionName()
 
     @_decorateWithAPM(=> processor(message.body, context))
     .tap => @_notifySuccess message
-    .tap => brokeredMessage.complete()
+    .tap => receiver.completeMessage brokeredMessage
     .tap => debug "Message %s processed OK.", context.bindingData.messageId
     .tapCatch (err) => @_notifyError message, err
     .tapCatch (err) => debug "Message %s processed with errors %o", context.bindingData.messageId, err
     .tapCatch =>
       unless @isReadingFromDeadLetter()
         debug "Abandoning message %s", context.bindingData.messageId
-        brokeredMessage.abandon()
+        receiver.abandonMessage brokeredMessage
     .finally => @_notifyFinish message
 
   onError: (err) => debug "An error has ocurred %o", err
@@ -82,7 +86,7 @@ class NotificationsReader
     }
 
   _createSubscriptionClient: =>
-    return @serviceBusService.createSubscriptionClient @config.topic, @_subscriptionName()
+    @serviceBusService.createReceiver @config.topic, @_subscriptionName()
 
   _notifyError: (message, error) => @_notify @statusObservers, message, "error", error
   _notifySuccess: (message) => @_notify @statusObservers, message, "success"
