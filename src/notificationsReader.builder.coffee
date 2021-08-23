@@ -45,7 +45,7 @@ class NotificationsReaderBuilder
     __addObservers 'finishObservers'
 
   _getServiceBus: =>
-    ServiceBusClient.createFromConnectionString @config.connectionString
+    new ServiceBusClient @config.connectionString
 
   build: =>
     @_validateRequired()
