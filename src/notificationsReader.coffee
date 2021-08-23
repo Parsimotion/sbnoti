@@ -31,7 +31,7 @@ class NotificationsReader
   # Starts to receive notifications and calls the given function with every received message.
   # processMessage: (parsedMessageBody, message) -> promise
   run: (processor) =>
-    receiver = @_createSubscriptionClient().createReceiver(ReceiveMode.peekLock)
+    receiver = @_createSubscriptionClient()
 
     receiver.subscribe({
       processMessage: @onMessage(receiver, processor)
